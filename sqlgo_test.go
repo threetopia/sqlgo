@@ -24,7 +24,7 @@ func TestOutput(t *testing.T) {
 					SetSelect("column1", "alias1"),
 				).
 					SQLFrom(SetFrom("table3", "alias3")).
-					SQLWhere(SetWhere("AND", "test", "=", "1")),
+					SQLWhere(SetWhere("AND", "test", "=", "1"), SetWhere("AND", "test", "=", "2")),
 				"alias2"),
 			SetSelect("column3", "alias3"),
 		).
@@ -43,6 +43,14 @@ func TestOutput(t *testing.T) {
 			SetWhere("AND", "alias1", "=", "12"),
 			SetWhere("AND", "alias1", "ANY", []string{"12", "12", "12"}),
 			SetWhere("AND", "alias1", "IN", []string{"12", "12", "12"}),
+			SetWhere("AND", "alias1", "IN",
+				NewSQLBuilder().SQLSelect(
+					SetSelect("asd", "asdAlias"),
+				).SQLFrom(SetFrom("testTable", "tt")).
+					SQLWhere(
+						SetWhere("AND", "tt.id", "=", "valuTable"),
+					),
+			),
 		)
 
 	fmt.Println(sql.BuildSQL(), sql.GetParams())

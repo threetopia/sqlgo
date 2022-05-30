@@ -6,11 +6,12 @@ import (
 )
 
 type SQLBuilder struct {
-	SelectClause []string
-	FromClause   string
-	JoinClause   []string
-	WhereClause  []string
-	Parameters   []interface{}
+	selectClause []string
+	fromClause   string
+	joinClause   []string
+	whereClause  []string
+	parameters   []interface{}
+	paramCount   int
 	isJoinScope  bool
 }
 
@@ -80,14 +81,16 @@ func (sb *SQLBuilder) SQLSelect(values ...SQLSelectValue) *SQLBuilder {
 		sql := ""
 		switch vt := v.Value.(type) {
 		case *SQLBuilder:
+			sb.SetParams(vt.parameters...)
+			sb.setParamCount(vt.getParamCount() + sb.getParamCount())
+			fmt.Println("========== SQLSelect.getParamCount =========", sb.getParamCount())
 			sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
-			sb.Parameters = append(sb.Parameters, vt.Parameters...)
 		case string:
 			sql = fmt.Sprintf("%s AS %s", vt, v.Alias)
 		default:
 			continue
 		}
-		sb.SelectClause = append(sb.SelectClause, sql)
+		sb.selectClause = append(sb.selectClause, sql)
 	}
 	return sb
 }
@@ -96,12 +99,14 @@ func (sb *SQLBuilder) SQLFrom(v SQLFromValue) *SQLBuilder {
 	sql := ""
 	switch vt := v.Value.(type) {
 	case *SQLBuilder:
+		sb.SetParams(vt.parameters...)
+		sb.setParamCount(vt.getParamCount() + sb.getParamCount())
+		fmt.Println("========== SQLFrom.getParamCount =========", sb.getParamCount())
 		sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
-		sb.Parameters = append(sb.Parameters, vt.Parameters...)
 	case string:
 		sql = fmt.Sprintf("%s AS %s", vt, v.Alias)
 	}
-	sb.FromClause = sql
+	sb.fromClause = sql
 
 	return sb
 }
@@ -120,12 +125,14 @@ func (sb *SQLBuilder) SQLJoin(values ...SQLJoinValue) *SQLBuilder {
 			// sb.Parameters = append(sb.Parameters, vt.Parameters...)
 		case string:
 			sqlWhere := NewSQLBuilder().setJoinScope().SQLWhere(v.JoinWhere...)
-			sql = fmt.Sprintf(" %s JOIN %s AS %s ON%s", strings.ToUpper(v.JoinType), vt, v.Alias, sqlWhere.BuildSQL())
-			sb.Parameters = append(sb.Parameters, sqlWhere.Parameters...)
+			sb.SetParams(sqlWhere.parameters...)
+			sb.setParamCount(sqlWhere.getParamCount() + sb.getParamCount())
+			fmt.Println("========== SQLJoin.getParamCount =========", sb.getParamCount())
+			sql = fmt.Sprintf(" %s JOIN %s AS %s%s", strings.ToUpper(v.JoinType), vt, v.Alias, sqlWhere.BuildSQL())
 		default:
 			continue
 		}
-		sb.JoinClause = append(sb.JoinClause, sql)
+		sb.joinClause = append(sb.joinClause, sql)
 	}
 	return sb
 }
@@ -150,12 +157,16 @@ func (sb *SQLBuilder) SQLWhere(values ...SQLWhereValue) *SQLBuilder {
 
 		switch vt := v.Value.(type) {
 		case *SQLBuilder:
-			// sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
-			// sb.Parameters = append(sb.Parameters, vt.Parameters...)
+			sb.SetParams(vt.parameters...)
+			sb.setParamCount(vt.getParamCount() + sb.getParamCount())
+			sql = fmt.Sprintf("%s%s%s(%s)", whereType, v.WhereColumn, v.Operator, vt.BuildSQL())
+			fmt.Println("========== SQLWhere.SQLBuilder.getParamCount =========", sb.getParamCount())
 		case string:
 			if !sb.isJoinScope {
-				sql = fmt.Sprintf("%s%s%s$%d", whereType, v.WhereColumn, v.Operator, len(sb.Parameters)+1)
-				sb.Parameters = append(sb.Parameters, vt)
+				sb.SetParams(vt)
+				sb.setParamCount(sb.getParamCount() + 1)
+				fmt.Println("========== SQLWhere.string.getParamCount =========", sb.getParamCount())
+				sql = fmt.Sprintf("%s%s%s$%d", whereType, v.WhereColumn, v.Operator, sb.getParamCount())
 			} else {
 				sql = fmt.Sprintf("%s%s%s%s", whereType, v.WhereColumn, v.Operator, vt)
 			}
@@ -168,21 +179,25 @@ func (sb *SQLBuilder) SQLWhere(values ...SQLWhereValue) *SQLBuilder {
 						delimiter = ","
 					}
 					if !sb.isJoinScope {
-						sql = fmt.Sprintf("%s%s$%d", sql, delimiter, len(sb.Parameters)+1)
-						sb.Parameters = append(sb.Parameters, vIn)
+						sb.SetParams(vIn)
+						sb.setParamCount(sb.getParamCount() + 1)
+						fmt.Println("========== SQLWhere.[]string.getParamCount =========", sb.getParamCount())
+						sql = fmt.Sprintf("%s%s$%d", sql, delimiter, sb.getParamCount())
 					} else {
 						sql = fmt.Sprintf("%s%s%s", sql, delimiter, vt)
 					}
 				}
 				sql = fmt.Sprintf("%s)", sql)
 			} else {
-				sql = fmt.Sprintf("%s%s%s($%d)", whereType, v.WhereColumn, v.Operator, len(sb.Parameters)+1)
-				sb.Parameters = append(sb.Parameters, vt)
+				sb.SetParams(vt)
+				sb.setParamCount(sb.getParamCount() + 1)
+				fmt.Println("========== SQLWhere.else.getParamCount =========", sb.getParamCount())
+				sql = fmt.Sprintf("%s%s%s($%d)", whereType, v.WhereColumn, v.Operator, sb.getParamCount())
 			}
 		default:
 			continue
 		}
-		sb.WhereClause = append(sb.WhereClause, sql)
+		sb.whereClause = append(sb.whereClause, sql)
 	}
 	return sb
 }
@@ -190,7 +205,7 @@ func (sb *SQLBuilder) SQLWhere(values ...SQLWhereValue) *SQLBuilder {
 func (sb *SQLBuilder) BuildSQL() string {
 	sql := ""
 	selectDelimiter := ""
-	for i, v := range sb.SelectClause {
+	for i, v := range sb.selectClause {
 		if i < 1 {
 			sql = fmt.Sprintf("SELECT %s", sql)
 		} else {
@@ -199,16 +214,16 @@ func (sb *SQLBuilder) BuildSQL() string {
 		sql = fmt.Sprintf("%s%s%s", sql, selectDelimiter, v)
 	}
 
-	if sb.FromClause != "" {
-		sql = fmt.Sprintf("%s FROM %s", sql, sb.FromClause)
+	if sb.fromClause != "" {
+		sql = fmt.Sprintf("%s FROM %s", sql, sb.fromClause)
 	}
 
-	for _, v := range sb.JoinClause {
-		v = strings.ReplaceAll(v, " WHERE ", " ")
+	for _, v := range sb.joinClause {
+		v = strings.ReplaceAll(v, " WHERE ", " ON ")
 		sql = fmt.Sprintf("%s%s%s", sql, "", v)
 	}
 
-	for i, v := range sb.WhereClause {
+	for i, v := range sb.whereClause {
 		if i < 1 {
 			sql = fmt.Sprintf("%s WHERE", sql)
 		}
@@ -218,6 +233,19 @@ func (sb *SQLBuilder) BuildSQL() string {
 	return sql
 }
 
+func (sb *SQLBuilder) setParamCount(count int) *SQLBuilder {
+	sb.paramCount = count
+	return sb
+}
+func (sb *SQLBuilder) getParamCount() int {
+	return sb.paramCount
+}
+
+func (sb *SQLBuilder) SetParams(params ...interface{}) *SQLBuilder {
+	sb.parameters = append(sb.parameters, params...)
+	return sb
+}
+
 func (sb *SQLBuilder) GetParams() []interface{} {
-	return sb.Parameters
+	return sb.parameters
 }
