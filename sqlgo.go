@@ -6,10 +6,10 @@ import (
 )
 
 type SQLBuilder struct {
-	selectClause []string
-	fromClause   string
-	joinClause   []string
-	whereClause  []string
+	selectClause []SQLSelectValue
+	fromClause   SQLFromValue
+	joinClause   []SQLJoinValue
+	whereClause  []SQLWhereValue
 	parameters   []interface{}
 	paramCount   int
 	isJoinScope  bool
@@ -77,37 +77,12 @@ func SetWhere[V string | []string | int | []int | int64 | []int64 | *SQLBuilder]
 }
 
 func (sb *SQLBuilder) SQLSelect(values ...SQLSelectValue) *SQLBuilder {
-	for _, v := range values {
-		sql := ""
-		switch vt := v.Value.(type) {
-		case *SQLBuilder:
-			sb.SetParams(vt.parameters...)
-			sb.setParamCount(vt.getParamCount() + sb.getParamCount())
-			fmt.Println("========== SQLSelect.getParamCount =========", sb.getParamCount())
-			sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
-		case string:
-			sql = fmt.Sprintf("%s AS %s", vt, v.Alias)
-		default:
-			continue
-		}
-		sb.selectClause = append(sb.selectClause, sql)
-	}
+	sb.selectClause = append(sb.selectClause, values...)
 	return sb
 }
 
 func (sb *SQLBuilder) SQLFrom(v SQLFromValue) *SQLBuilder {
-	sql := ""
-	switch vt := v.Value.(type) {
-	case *SQLBuilder:
-		sb.SetParams(vt.parameters...)
-		sb.setParamCount(vt.getParamCount() + sb.getParamCount())
-		fmt.Println("========== SQLFrom.getParamCount =========", sb.getParamCount())
-		sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
-	case string:
-		sql = fmt.Sprintf("%s AS %s", vt, v.Alias)
-	}
-	sb.fromClause = sql
-
+	sb.fromClause = v
 	return sb
 }
 
@@ -117,23 +92,7 @@ func (sb *SQLBuilder) setJoinScope() *SQLBuilder {
 }
 
 func (sb *SQLBuilder) SQLJoin(values ...SQLJoinValue) *SQLBuilder {
-	for _, v := range values {
-		sql := ""
-		switch vt := v.Value.(type) {
-		case *SQLBuilder:
-			// sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
-			// sb.Parameters = append(sb.Parameters, vt.Parameters...)
-		case string:
-			sqlWhere := NewSQLBuilder().setJoinScope().SQLWhere(v.JoinWhere...)
-			sb.SetParams(sqlWhere.parameters...)
-			sb.setParamCount(sqlWhere.getParamCount() + sb.getParamCount())
-			fmt.Println("========== SQLJoin.getParamCount =========", sb.getParamCount())
-			sql = fmt.Sprintf(" %s JOIN %s AS %s%s", strings.ToUpper(v.JoinType), vt, v.Alias, sqlWhere.BuildSQL())
-		default:
-			continue
-		}
-		sb.joinClause = append(sb.joinClause, sql)
-	}
+	sb.joinClause = append(sb.joinClause, values...)
 	return sb
 }
 
@@ -143,93 +102,21 @@ var specialOperator = map[string]string{
 }
 
 func (sb *SQLBuilder) SQLWhere(values ...SQLWhereValue) *SQLBuilder {
-	for i, v := range values {
-		whereType := " "
-		if i > 0 {
-			whereType = fmt.Sprintf(" %s ", strings.ToUpper(v.WhereType))
-		}
-
-		sql := ""
-		operator := v.Operator
-		if vo, ok := specialOperator[v.Operator]; ok {
-			v.Operator = vo
-		}
-
-		switch vt := v.Value.(type) {
-		case *SQLBuilder:
-			sb.SetParams(vt.parameters...)
-			sb.setParamCount(vt.getParamCount() + sb.getParamCount())
-			sql = fmt.Sprintf("%s%s%s(%s)", whereType, v.WhereColumn, v.Operator, vt.BuildSQL())
-			fmt.Println("========== SQLWhere.SQLBuilder.getParamCount =========", sb.getParamCount())
-		case string:
-			if !sb.isJoinScope {
-				sb.SetParams(vt)
-				sb.setParamCount(sb.getParamCount() + 1)
-				fmt.Println("========== SQLWhere.string.getParamCount =========", sb.getParamCount())
-				sql = fmt.Sprintf("%s%s%s$%d", whereType, v.WhereColumn, v.Operator, sb.getParamCount())
-			} else {
-				sql = fmt.Sprintf("%s%s%s%s", whereType, v.WhereColumn, v.Operator, vt)
-			}
-		case []string:
-			if operator == "IN" {
-				sql = fmt.Sprintf("%s%s%s(", whereType, v.WhereColumn, v.Operator)
-				for iIn, vIn := range vt {
-					delimiter := ""
-					if iIn > 0 {
-						delimiter = ","
-					}
-					if !sb.isJoinScope {
-						sb.SetParams(vIn)
-						sb.setParamCount(sb.getParamCount() + 1)
-						fmt.Println("========== SQLWhere.[]string.getParamCount =========", sb.getParamCount())
-						sql = fmt.Sprintf("%s%s$%d", sql, delimiter, sb.getParamCount())
-					} else {
-						sql = fmt.Sprintf("%s%s%s", sql, delimiter, vt)
-					}
-				}
-				sql = fmt.Sprintf("%s)", sql)
-			} else {
-				sb.SetParams(vt)
-				sb.setParamCount(sb.getParamCount() + 1)
-				fmt.Println("========== SQLWhere.else.getParamCount =========", sb.getParamCount())
-				sql = fmt.Sprintf("%s%s%s($%d)", whereType, v.WhereColumn, v.Operator, sb.getParamCount())
-			}
-		default:
-			continue
-		}
-		sb.whereClause = append(sb.whereClause, sql)
-	}
+	sb.whereClause = append(sb.whereClause, values...)
 	return sb
 }
 
 func (sb *SQLBuilder) BuildSQL() string {
-	sql := ""
-	selectDelimiter := ""
-	for i, v := range sb.selectClause {
-		if i < 1 {
-			sql = fmt.Sprintf("SELECT %s", sql)
-		} else {
-			selectDelimiter = ", "
-		}
-		sql = fmt.Sprintf("%s%s%s", sql, selectDelimiter, v)
+	sql := sb.buildSQLSelect()
+	if sqlFrom := sb.buildSQLFrom(); sqlFrom != "" {
+		sql = fmt.Sprintf("%s %s", sql, sqlFrom)
 	}
-
-	if sb.fromClause != "" {
-		sql = fmt.Sprintf("%s FROM %s", sql, sb.fromClause)
+	if sqlJoin := sb.buildSQLJoin(); sqlJoin != "" {
+		sql = fmt.Sprintf("%s%s", sql, sqlJoin)
 	}
-
-	for _, v := range sb.joinClause {
-		v = strings.ReplaceAll(v, " WHERE ", " ON ")
-		sql = fmt.Sprintf("%s%s%s", sql, "", v)
+	if sqlWhere := sb.buildSQLWhere(); sqlWhere != "" {
+		sql = fmt.Sprintf("%s %s", sql, sqlWhere)
 	}
-
-	for i, v := range sb.whereClause {
-		if i < 1 {
-			sql = fmt.Sprintf("%s WHERE", sql)
-		}
-		sql = fmt.Sprintf("%s%s", sql, v)
-	}
-
 	return sql
 }
 
@@ -248,4 +135,129 @@ func (sb *SQLBuilder) SetParams(params ...interface{}) *SQLBuilder {
 
 func (sb *SQLBuilder) GetParams() []interface{} {
 	return sb.parameters
+}
+
+func (sb *SQLBuilder) buildSQLSelect() string {
+	if sb.selectClause == nil {
+		return ""
+	}
+
+	sql := "SELECT "
+	for iSelect, vSelect := range sb.selectClause {
+		if iSelect > 0 {
+			sql = fmt.Sprintf("%s, ", sql)
+		}
+
+		switch vType := vSelect.Value.(type) {
+		case string:
+			sql = fmt.Sprintf("%s%s AS %s", sql, vType, vSelect.Alias)
+		case *SQLBuilder:
+			sql = fmt.Sprintf("%s(%s) AS %s", sql, vType.setParamCount(sb.getParamCount()).BuildSQL(), vSelect.Alias)
+			sb.SetParams(vType.GetParams()...)
+			sb.setParamCount(vType.getParamCount())
+		}
+	}
+	return sql
+}
+
+func (sb *SQLBuilder) buildSQLFrom() string {
+	if sb.fromClause.Value == nil {
+		return ""
+	}
+
+	sql := "FROM "
+	switch vType := sb.fromClause.Value.(type) {
+	case string:
+		sql = fmt.Sprintf("%s%s AS %s", sql, vType, sb.fromClause.Alias)
+	case *SQLBuilder:
+		sql = fmt.Sprintf("%s(%s) AS %s", sql, vType.setParamCount(sb.getParamCount()).BuildSQL(), sb.fromClause.Alias)
+		sb.SetParams(vType.GetParams()...)
+		sb.setParamCount(vType.getParamCount())
+	}
+	return sql
+}
+
+func (sb *SQLBuilder) buildSQLJoin() string {
+	if sb.joinClause == nil {
+		return ""
+	}
+
+	sql := ""
+	for _, vJoin := range sb.joinClause {
+		switch vType := vJoin.Value.(type) {
+		case *SQLBuilder:
+			// sql = fmt.Sprintf("(%s) AS %s", vt.BuildSQL(), v.Alias)
+			// sb.Parameters = append(sb.Parameters, vt.Parameters...)
+		case string:
+			sqlWhere := NewSQLBuilder().setJoinScope().SQLWhere(vJoin.JoinWhere...)
+			sql = fmt.Sprintf("%s %s JOIN %s AS %s%s",
+				sql,
+				strings.ToUpper(vJoin.JoinType),
+				vType,
+				vJoin.Alias,
+				strings.ReplaceAll(sqlWhere.setParamCount(sb.getParamCount()).BuildSQL(), "WHERE", "ON"),
+			)
+			sb.SetParams(sqlWhere.parameters...)
+			sb.setParamCount(sqlWhere.getParamCount())
+		default:
+			continue
+		}
+	}
+
+	return sql
+}
+func (sb *SQLBuilder) buildSQLWhere() string {
+	sql := "WHERE"
+	for iWhere, vWhere := range sb.whereClause {
+		whereType := " "
+		if iWhere > 0 {
+			whereType = fmt.Sprintf(" %s ", strings.ToUpper(vWhere.WhereType))
+		}
+
+		operator := vWhere.Operator
+		if vo, ok := specialOperator[vWhere.Operator]; ok {
+			vWhere.Operator = vo
+		}
+
+		switch vType := vWhere.Value.(type) {
+		case *SQLBuilder:
+			sql = fmt.Sprintf("%s%s%s%s(%s)", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType.setParamCount(sb.getParamCount()).BuildSQL())
+			sb.SetParams(vType.parameters...)
+			sb.setParamCount(vType.getParamCount() + sb.getParamCount())
+		case string:
+			if sb.isJoinScope {
+				sql = fmt.Sprintf("%s%s%s%s%s", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType)
+			} else {
+				sb.SetParams(vType)
+				sb.setParamCount(sb.getParamCount() + 1)
+				sql = fmt.Sprintf("%s%s%s%s$%d", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
+			}
+		case []string:
+			if operator == "IN" {
+				sql = fmt.Sprintf("%s%s%s%s(", sql, whereType, vWhere.WhereColumn, vWhere.Operator)
+				for iIn, vIn := range vType {
+					delimiter := ""
+					if iIn > 0 {
+						delimiter = ","
+					}
+					if sb.isJoinScope {
+						sql = fmt.Sprintf("%s%s%s", sql, delimiter, vType)
+					} else {
+						sb.SetParams(vIn)
+						sb.setParamCount(sb.getParamCount() + 1)
+						sql = fmt.Sprintf("%s%s$%d", sql, delimiter, sb.getParamCount())
+					}
+				}
+				sql = fmt.Sprintf("%s)", sql)
+			} else {
+				sb.SetParams(vType)
+				sb.setParamCount(sb.getParamCount() + 1)
+				sql = fmt.Sprintf("%s%s%s%s($%d)", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
+			}
+		default:
+			continue
+		}
+	}
+
+	return sql
 }

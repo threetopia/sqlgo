@@ -21,17 +21,17 @@ func TestOutput(t *testing.T) {
 			SetSelect("column2", "alias2"),
 			SetSelect(
 				NewSQLBuilder().SQLSelect(
-					SetSelect("column1", "alias1"),
+					SetSelect("column3", "alias3"),
 				).
 					SQLFrom(SetFrom("table3", "alias3")).
-					SQLWhere(SetWhere("AND", "test", "=", "1"), SetWhere("AND", "test", "=", "2")),
-				"alias2"),
-			SetSelect("column3", "alias3"),
+					SQLWhere(SetWhere("AND", "test1", "=", "1"), SetWhere("AND", "test2", "=", "2")),
+				"alias3"),
+			SetSelect("column4", "alias4"),
 		).
-		SQLFrom(SetFrom("table3", "alias3")).
+		SQLFrom(SetFrom("table5", "alias5")).
 		SQLJoin(
 			SetJoin("LEFT", "joinTable", "jt",
-				SetWhere("ON", "jt.id", "=", "alias3.id"),
+				SetWhere("AND", "jt.id", "=", "alias3.id"),
 				SetWhere("AND", "jt.id", "=", "alias2.id"),
 			),
 			SetJoin("INNER", "joinTable", "jt",
