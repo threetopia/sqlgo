@@ -224,14 +224,22 @@ func (sb *SQLBuilder) buildSQLWhere() string {
 			sql = fmt.Sprintf("%s%s%s%s(%s)", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType.setParamCount(sb.getParamCount()).BuildSQL())
 			sb.SetParams(vType.parameters...)
 			sb.setParamCount(vType.getParamCount() + sb.getParamCount())
-		case string:
-			if sb.isJoinScope {
-				sql = fmt.Sprintf("%s%s%s%s%s", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType)
-			} else {
-				sb.SetParams(vType)
-				sb.setParamCount(sb.getParamCount() + 1)
-				sql = fmt.Sprintf("%s%s%s%s$%d", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
-			}
+		// case string:
+		// 	if sb.isJoinScope {
+		// 		sql = fmt.Sprintf("%s%s%s%s%s", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType)
+		// 	} else {
+		// 		sb.SetParams(vType)
+		// 		sb.setParamCount(sb.getParamCount() + 1)
+		// 		sql = fmt.Sprintf("%s%s%s%s$%d", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
+		// 	}
+		// case int:
+		// 	if sb.isJoinScope {
+		// 		sql = fmt.Sprintf("%s%s%s%s%s", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType)
+		// 	} else {
+		// 		sb.SetParams(vType)
+		// 		sb.setParamCount(sb.getParamCount() + 1)
+		// 		sql = fmt.Sprintf("%s%s%s%s$%d", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
+		// 	}
 		case []string:
 			if operator == "IN" {
 				sql = fmt.Sprintf("%s%s%s%s(", sql, whereType, vWhere.WhereColumn, vWhere.Operator)
@@ -254,8 +262,36 @@ func (sb *SQLBuilder) buildSQLWhere() string {
 				sb.setParamCount(sb.getParamCount() + 1)
 				sql = fmt.Sprintf("%s%s%s%s($%d)", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
 			}
+		case []int:
+			if operator == "IN" {
+				sql = fmt.Sprintf("%s%s%s%s(", sql, whereType, vWhere.WhereColumn, vWhere.Operator)
+				for iIn, vIn := range vType {
+					delimiter := ""
+					if iIn > 0 {
+						delimiter = ","
+					}
+					if sb.isJoinScope {
+						sql = fmt.Sprintf("%s%s%d", sql, delimiter, vType)
+					} else {
+						sb.SetParams(vIn)
+						sb.setParamCount(sb.getParamCount() + 1)
+						sql = fmt.Sprintf("%s%s$%d", sql, delimiter, sb.getParamCount())
+					}
+				}
+				sql = fmt.Sprintf("%s)", sql)
+			} else {
+				sb.SetParams(vType)
+				sb.setParamCount(sb.getParamCount() + 1)
+				sql = fmt.Sprintf("%s%s%s%s($%d)", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
+			}
 		default:
-			continue
+			if sb.isJoinScope {
+				sql = fmt.Sprintf("%s%s%s%s%s", sql, whereType, vWhere.WhereColumn, vWhere.Operator, vType)
+			} else {
+				sb.SetParams(vType)
+				sb.setParamCount(sb.getParamCount() + 1)
+				sql = fmt.Sprintf("%s%s%s%s$%d", sql, whereType, vWhere.WhereColumn, vWhere.Operator, sb.getParamCount())
+			}
 		}
 	}
 

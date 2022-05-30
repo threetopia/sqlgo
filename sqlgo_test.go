@@ -40,10 +40,11 @@ func TestOutput(t *testing.T) {
 			),
 		).
 		SQLWhere(
-			SetWhere("AND", "alias1", "=", "12"),
-			SetWhere("AND", "alias1", "ANY", []string{"12", "12", "12"}),
-			SetWhere("AND", "alias1", "IN", []string{"12", "12", "12"}),
-			SetWhere("AND", "alias1", "IN",
+			SetWhere("AND", "alias1", "=", "qweqwe"),
+			SetWhere("AND", "alias2", "ANY", []string{"qwe", "12", "12"}),
+			SetWhere("AND", "alias3", "IN", []string{"12", "12", "12"}),
+			SetWhere("AND", "alias4", "IN", []int{12, 12, 12}),
+			SetWhere("AND", "alias5", "IN",
 				NewSQLBuilder().SQLSelect(
 					SetSelect("asd", "asdAlias"),
 				).SQLFrom(SetFrom("testTable", "tt")).
