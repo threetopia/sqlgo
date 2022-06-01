@@ -13,6 +13,8 @@ type KnownTypes interface {
 }
 
 type SQLBuilder struct {
+	insertClause SQLInsertValue
+	updateClause []SQLUpdateValue
 	selectClause []SQLSelectValue
 	fromClause   SQLFromValue
 	joinClause   []SQLJoinValue
@@ -22,6 +24,20 @@ type SQLBuilder struct {
 	isJoinScope  bool
 }
 
+type SQLInsertValue struct {
+	Table   string
+	Columns []string
+	Values  [][]interface{}
+}
+
+type SQLInsertValues struct {
+	Column string
+	Value  []interface{}
+}
+type SQLUpdateValue struct {
+	Column string
+	Value  interface{}
+}
 type SQLSelectValue struct {
 	Alias string
 	Value interface{}
@@ -47,17 +63,30 @@ type SQLWhereValue struct {
 	Value       interface{} // anyValue, *SQLBuilder for sub query
 }
 
-type SQLInsertValue struct {
-	Column string
-	Value  interface{}
-}
-type SQLUpdateValue struct {
-	Column string
-	Value  interface{}
-}
-
 func NewSQLBuilder() *SQLBuilder {
 	return &SQLBuilder{}
+}
+
+func SetInsert(column string, value ...interface{}) SQLInsertValues {
+	return SQLInsertValues{
+		Column: column,
+		Value:  value,
+	}
+}
+
+func SetColumns(columns ...string) []string {
+	return columns
+}
+
+func SetValues(values ...interface{}) []interface{} {
+	return values
+}
+
+func SetUpdate[V string | *SQLBuilder](column string, value V) SQLUpdateValue {
+	return SQLUpdateValue{
+		Column: column,
+		Value:  value,
+	}
 }
 
 func SetSelect[V string | *SQLBuilder](value V, alias string) SQLSelectValue {
@@ -92,18 +121,11 @@ func SetWhere[V KnownTypes | *SQLBuilder](whereType string, column string, opera
 	}
 }
 
-func SetInsert[V string | *SQLBuilder](column string, value *SQLBuilder) SQLInsertValue {
-	return SQLInsertValue{
-		Column: column,
-		Value:  value,
-	}
-}
-
-func SetUpdate[V string | *SQLBuilder](column string, value *SQLBuilder) SQLUpdateValue {
-	return SQLUpdateValue{
-		Column: column,
-		Value:  value,
-	}
+func (sb *SQLBuilder) SQLInsert(table string, columns []string, values ...[]interface{}) *SQLBuilder {
+	sb.insertClause.Table = table
+	sb.insertClause.Columns = columns
+	sb.insertClause.Values = append(sb.insertClause.Values, values...)
+	return sb
 }
 
 func (sb *SQLBuilder) SQLSelect(values ...SQLSelectValue) *SQLBuilder {
@@ -137,7 +159,13 @@ func (sb *SQLBuilder) SQLWhere(values ...SQLWhereValue) *SQLBuilder {
 }
 
 func (sb *SQLBuilder) BuildSQL() string {
-	sql := sb.buildSQLSelect()
+	sql := ""
+	if sqlInsert := sb.buildSQLInsert(); sqlInsert != "" {
+		sql = fmt.Sprintf("%s %s", sql, sqlInsert)
+	}
+	if sqlSelect := sb.buildSQLSelect(); sqlSelect != "" {
+		sql = fmt.Sprintf("%s %s", sql, sqlSelect)
+	}
 	if sqlFrom := sb.buildSQLFrom(); sqlFrom != "" {
 		sql = fmt.Sprintf("%s %s", sql, sqlFrom)
 	}
@@ -165,6 +193,40 @@ func (sb *SQLBuilder) SetParams(params ...interface{}) *SQLBuilder {
 
 func (sb *SQLBuilder) GetParams() []interface{} {
 	return sb.parameters
+}
+
+func (sb *SQLBuilder) buildSQLInsert() string {
+	if sb.insertClause.Values == nil {
+		return ""
+	}
+
+	sql := fmt.Sprintf("INSERT %s (", sb.insertClause.Table)
+	for iColumn, vColumn := range sb.insertClause.Columns {
+		if iColumn > 0 {
+			sql = fmt.Sprintf("%s, ", sql)
+		}
+		sql = fmt.Sprintf("%s%s", sql, vColumn)
+	}
+	sql = fmt.Sprintf("%s)", sql)
+
+	for iValues, vValues := range sb.insertClause.Values {
+		if iValues > 0 {
+			sql = fmt.Sprintf("%s, ", sql)
+		} else {
+			sql = fmt.Sprintf("%s VALUES ", sql)
+		}
+
+		sqlValues := "("
+		for iValue, vValue := range vValues {
+			if iValue > 0 {
+				sqlValues = fmt.Sprintf("%s, ", sqlValues)
+			}
+			sqlValues = fmt.Sprintf("%s%s", sqlValues, vValue)
+		}
+		sqlValues = fmt.Sprintf("%s)", sqlValues)
+		sql = fmt.Sprintf("%s%s", sql, sqlValues)
+	}
+	return sql
 }
 
 func (sb *SQLBuilder) buildSQLSelect() string {

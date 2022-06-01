@@ -66,3 +66,14 @@ func TestOutput(t *testing.T) {
 
 	fmt.Println(sql.BuildSQL(), sql.GetParams())
 }
+
+func TestInsertOutput(t *testing.T) {
+	sql := NewSQLBuilder().SQLInsert("test",
+		SetColumns("columnASD", "columnQWE"),
+		SetValues("asd1", "qwe1"),
+		SetValues("asd2", "qwe2"),
+		SetValues("asd3", "qwe3"),
+		SetValues("asd4", "qwe4"),
+	)
+	fmt.Println(sql.BuildSQL(), sql.GetParams())
+}
