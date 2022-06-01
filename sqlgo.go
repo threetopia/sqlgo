@@ -24,9 +24,11 @@ type SQLBuilder struct {
 	isJoinScope  bool
 }
 
+type SQLColumns []string
+
 type SQLInsertValue struct {
 	Table   string
-	Columns []string
+	Columns SQLColumns
 	Values  [][]interface{}
 }
 
@@ -67,14 +69,7 @@ func NewSQLBuilder() *SQLBuilder {
 	return &SQLBuilder{}
 }
 
-func SetInsert(column string, value ...interface{}) SQLInsertValues {
-	return SQLInsertValues{
-		Column: column,
-		Value:  value,
-	}
-}
-
-func SetColumns(columns ...string) []string {
+func SetColumns(columns ...string) SQLColumns {
 	return columns
 }
 
@@ -121,7 +116,7 @@ func SetWhere[V KnownTypes | *SQLBuilder](whereType string, column string, opera
 	}
 }
 
-func (sb *SQLBuilder) SQLInsert(table string, columns []string, values ...[]interface{}) *SQLBuilder {
+func (sb *SQLBuilder) SQLInsert(table string, columns SQLColumns, values ...[]interface{}) *SQLBuilder {
 	sb.insertClause.Table = table
 	sb.insertClause.Columns = columns
 	sb.insertClause.Values = append(sb.insertClause.Values, values...)
@@ -221,7 +216,9 @@ func (sb *SQLBuilder) buildSQLInsert() string {
 			if iValue > 0 {
 				sqlValues = fmt.Sprintf("%s, ", sqlValues)
 			}
-			sqlValues = fmt.Sprintf("%s%s", sqlValues, vValue)
+			sb.SetParams(vValue)
+			sb.setParamCount(sb.getParamCount() + 1)
+			sqlValues = fmt.Sprintf("%s$%d", sqlValues, sb.getParamCount())
 		}
 		sqlValues = fmt.Sprintf("%s)", sqlValues)
 		sql = fmt.Sprintf("%s%s", sql, sqlValues)
