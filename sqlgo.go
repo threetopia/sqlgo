@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+type KnownTypes interface {
+	string | []string |
+		int | []int |
+		float32 | []float32 |
+		float64 | []float64
+}
+
 type SQLBuilder struct {
 	selectClause []SQLSelectValue
 	fromClause   SQLFromValue
@@ -76,17 +83,7 @@ func SetJoin[V string | *SQLBuilder](joinType string, value V, alias string, Joi
 	}
 }
 
-func SetWhere[V string |
-	[]string |
-	int |
-	[]int |
-	int64 |
-	[]int64 |
-	float32 |
-	[]float32 |
-	float64 |
-	[]float64 |
-	*SQLBuilder](whereType string, column string, operator string, value V) SQLWhereValue {
+func SetWhere[V KnownTypes | *SQLBuilder](whereType string, column string, operator string, value V) SQLWhereValue {
 	return SQLWhereValue{
 		WhereType:   whereType,
 		WhereColumn: column,

@@ -25,8 +25,8 @@ func TestOutput(t *testing.T) {
 				).
 					SQLFrom(SetFrom(NewSQLBuilder().
 						SQLSelect(SetSelect("qwe", "qwe")).
-						SQLFrom(SetFrom("qwe", "qwe")).SQLWhere(SetWhere("AND", "qwe", "=", "qwe")), "alias3")).
-					SQLWhere(SetWhere("AND", "test1", "=", "1"), SetWhere("AND", "test2", "=", "2")),
+						SQLFrom(SetFrom("qwe", "qwe")).SQLWhere(SetWhere("AND", "qwe", "=", "qwe"), SetWhere("AND", "qwe", "=", "qwe")), "alias3")).
+					SQLWhere(SetWhere("AND", "test1", "=", "1qwe"), SetWhere("AND", "test2", "=", "2qwe")),
 				"alias3"),
 			SetSelect("column4", "alias4"),
 		).
