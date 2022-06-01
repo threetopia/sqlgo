@@ -77,3 +77,13 @@ func TestInsertOutput(t *testing.T) {
 	)
 	fmt.Println(sql.BuildSQL(), sql.GetParams())
 }
+
+func TestUpdatetOutput(t *testing.T) {
+	sql := NewSQLBuilder().SQLUpdate("test",
+		SetUpdate("asd1", "qwe1"),
+		SetUpdate("asd2", "qwe2"),
+		SetUpdate("asd3", "qwe3"),
+		SetUpdate("asd4", "qwe4"),
+	)
+	fmt.Println(sql.BuildSQL(), sql.GetParams())
+}

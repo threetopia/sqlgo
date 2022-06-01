@@ -14,7 +14,7 @@ type KnownTypes interface {
 
 type SQLBuilder struct {
 	insertClause SQLInsertValue
-	updateClause []SQLUpdateValue
+	updateClause SQLUpdateValue
 	selectClause []SQLSelectValue
 	fromClause   SQLFromValue
 	joinClause   []SQLJoinValue
@@ -29,7 +29,7 @@ type SQLColumns []string
 type SQLInsertValue struct {
 	Table   string
 	Columns SQLColumns
-	Values  [][]interface{}
+	Value   [][]interface{}
 }
 
 type SQLInsertValues struct {
@@ -37,9 +37,15 @@ type SQLInsertValues struct {
 	Value  []interface{}
 }
 type SQLUpdateValue struct {
+	Table string
+	Value []SQLUpdateValues
+}
+
+type SQLUpdateValues struct {
 	Column string
 	Value  interface{}
 }
+
 type SQLSelectValue struct {
 	Alias string
 	Value interface{}
@@ -77,8 +83,8 @@ func SetValues(values ...interface{}) []interface{} {
 	return values
 }
 
-func SetUpdate[V string | *SQLBuilder](column string, value V) SQLUpdateValue {
-	return SQLUpdateValue{
+func SetUpdate(column string, value interface{}) SQLUpdateValues {
+	return SQLUpdateValues{
 		Column: column,
 		Value:  value,
 	}
@@ -119,7 +125,13 @@ func SetWhere[V KnownTypes | *SQLBuilder](whereType string, column string, opera
 func (sb *SQLBuilder) SQLInsert(table string, columns SQLColumns, values ...[]interface{}) *SQLBuilder {
 	sb.insertClause.Table = table
 	sb.insertClause.Columns = columns
-	sb.insertClause.Values = append(sb.insertClause.Values, values...)
+	sb.insertClause.Value = append(sb.insertClause.Value, values...)
+	return sb
+}
+
+func (sb *SQLBuilder) SQLUpdate(table string, values ...SQLUpdateValues) *SQLBuilder {
+	sb.updateClause.Table = table
+	sb.updateClause.Value = append(sb.updateClause.Value, values...)
 	return sb
 }
 
@@ -191,7 +203,7 @@ func (sb *SQLBuilder) GetParams() []interface{} {
 }
 
 func (sb *SQLBuilder) buildSQLInsert() string {
-	if sb.insertClause.Values == nil {
+	if sb.insertClause.Value == nil {
 		return ""
 	}
 
@@ -204,7 +216,7 @@ func (sb *SQLBuilder) buildSQLInsert() string {
 	}
 	sql = fmt.Sprintf("%s)", sql)
 
-	for iValues, vValues := range sb.insertClause.Values {
+	for iValues, vValues := range sb.insertClause.Value {
 		if iValues > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
 		} else {
