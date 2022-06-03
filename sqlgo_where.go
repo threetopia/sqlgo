@@ -66,8 +66,8 @@ func (sw *SQLGoWhere) BuildSQL() string {
 		switch vType := v.value.(type) {
 		case *SQLGo:
 			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.SetParamsCount(sw.GetParamsCount()).BuildSQL())
-			sw.SetParams(vType.GetParams()...)
-			sw.SetParamsCount(vType.GetParamsCount())
+			sw.SetParams(vType.GetParams()...).
+				SetParamsCount(vType.GetParamsCount())
 		case []string:
 			sql = buildWhereSlice(sw, sql, operator, v, vType)
 		case []int:

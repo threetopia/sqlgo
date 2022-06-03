@@ -19,7 +19,7 @@ func NewSQLGoJoin() *SQLGoJoin {
 	return &SQLGoJoin{}
 }
 
-func SetJoin(joinType string, table string, alias string, sqlWhere ...SqlGoWhereValue) SQLGoJoinValue {
+func SetJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) SQLGoJoinValue {
 	return SQLGoJoinValue{
 		joinType: joinType,
 		table:    table,
@@ -33,7 +33,7 @@ func (sj *SQLGoJoin) SQLJoin(values ...SQLGoJoinValue) *SQLGoJoin {
 	return sj
 }
 
-func (sj *SQLGoJoin) SetSQLJoin(joinType string, table string, alias string, sqlWhere ...SqlGoWhereValue) *SQLGoJoin {
+func (sj *SQLGoJoin) SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) *SQLGoJoin {
 	sj.values = append(sj.values, SetJoin(joinType, table, alias, sqlWhere...))
 	return sj
 }
@@ -49,10 +49,15 @@ func (sj *SQLGoJoin) BuildSQL() string {
 			sql = fmt.Sprintf("%s ", sql)
 		}
 
-		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...).SetParamsCount(sj.GetParamsCount()).SetJoinScope()
+		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...).SetJoinScope()
 		switch vType := v.table.(type) {
-		case string:
-			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s", sql, v.joinType, vType, v.alias, sqlWhere.BuildSQL())
+		case *SQLGo:
+			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s", sql, v.joinType, vType.SetParamsCount(sj.GetParamsCount()).BuildSQL(), v.alias, sqlWhere.SetParamsCount(vType.GetParamsCount()).BuildSQL())
+			sj.SetParams(sqlWhere.GetParams()...).
+				SetParams(vType.GetParams()...).
+				SetParamsCount(sqlWhere.GetParamsCount())
+		default:
+			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s", sql, v.joinType, vType, v.alias, sqlWhere.SetParamsCount(sj.GetParamsCount()).BuildSQL())
 			sj.SetParams(sqlWhere.GetParams()...)
 			sj.SetParamsCount(sqlWhere.GetParamsCount())
 		}

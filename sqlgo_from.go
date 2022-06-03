@@ -30,12 +30,10 @@ func (sf *SQLGoFrom) BuildSQL() string {
 
 	sql := "FROM "
 	switch vType := sf.table.(type) {
-	// case string:
-	// 	sql = fmt.Sprintf("%s%s", sql, vType)
 	case *SQLGo:
 		sql = fmt.Sprintf("%s(%s)", sql, vType.SetParamsCount(sf.GetParamsCount()).BuildSQL())
-		sf.SetParams(vType.GetParams()...)
-		sf.SetParamsCount(vType.GetParamsCount())
+		sf.SetParams(vType.GetParams()...).
+			SetParamsCount(vType.GetParamsCount())
 	default:
 		sql = fmt.Sprintf("%s%s", sql, vType)
 	}

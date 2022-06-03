@@ -40,7 +40,7 @@ func (sg *SQLGo) SQLJoin(values ...SQLGoJoinValue) *SQLGo {
 	return sg
 }
 
-func (sg *SQLGo) SetSQLJoin(joinType string, table string, alias string, sqlWhere ...SqlGoWhereValue) *SQLGo {
+func (sg *SQLGo) SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) *SQLGo {
 	sg.sqlJoin.SetSQLJoin(joinType, table, alias, sqlWhere...)
 	return sg
 }

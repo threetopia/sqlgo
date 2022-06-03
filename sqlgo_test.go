@@ -53,6 +53,15 @@ func TestOutputChain(t *testing.T) {
 		SetSQLFrom("table", "").
 		SetSQLJoin("INNER", "table", "tbl", SetWhere("AND", "asd", "=", "asdasd")).
 		SetSQLJoin("LEFT", "table", "tbl", SetWhere("AND", "asd", "=", "asdasd")).
+		SetSQLJoin("OUTER",
+			NewSQLGo().
+				SetSQLSelect("asd", "asd").SetSQLFrom("asdTbl", "").
+				SetSQLWhere("AND", "ert", "=", "yui").
+				SetSQLWhere("AND", "ghj", "=", "jkl").
+				SetSQLWhere("AND", "ghj", "IN", []int{1, 2, 3}).
+				SetSQLWhere("AND", "ghj", "ANY", []int{1, 2, 3}),
+			"tbl", SetWhere("AND", "asd", "=", "asdasd")).
+		SetSQLWhere("AND", "column1", "=", "123").
 		SetSQLWhere("AND", "column1", "=", "123").
 		SetSQLWhere("AND", "column1", "=", "123")
 	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
