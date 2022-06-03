@@ -46,7 +46,7 @@ func (ss *SQLGoSelect) BuildSQL() string {
 		// case string:
 		// 	sql = fmt.Sprintf("%s%s", sql, vType)
 		case *SQLGo:
-			sql = fmt.Sprintf("%s(%s)", sql, vType.SetParams(ss.GetParams()...).SetParamsCount(ss.GetParamsCount()).BuildSQL())
+			sql = fmt.Sprintf("%s(%s)", sql, vType.SetParamsCount(ss.GetParamsCount()).BuildSQL())
 			ss.SetParams(vType.GetParams()...)
 			ss.SetParamsCount(vType.GetParamsCount())
 		default:

@@ -44,7 +44,11 @@ func (sw *SQLGoWhere) BuildSQL() string {
 			sql = fmt.Sprintf("%s %s ", sql, v.whereType)
 		}
 		switch vType := v.value.(type) {
-		case string:
+		case *SQLGo:
+			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.SetParamsCount(sw.GetParamsCount()).BuildSQL())
+			sw.SetParams(vType.GetParams()...)
+			sw.SetParamsCount(vType.GetParamsCount())
+		default:
 			sw.SetParams(vType)
 			sw.SetParamsCount(sw.GetParamsCount() + 1)
 			sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())

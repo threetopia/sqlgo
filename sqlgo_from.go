@@ -29,7 +29,9 @@ func (sf *SQLGoFrom) BuildSQL() string {
 	// case string:
 	// 	sql = fmt.Sprintf("%s%s", sql, vType)
 	case *SQLGo:
-		sql = fmt.Sprintf("%s(%s)", sql, vType.SetParams(sf.GetParams()...).SetParamsCount(sf.GetParamsCount()).BuildSQL())
+		sql = fmt.Sprintf("%s(%s)", sql, vType.SetParamsCount(sf.GetParamsCount()).BuildSQL())
+		sf.SetParams(vType.GetParams()...)
+		sf.SetParamsCount(vType.GetParamsCount())
 	default:
 		sql = fmt.Sprintf("%s%s", sql, vType)
 	}
