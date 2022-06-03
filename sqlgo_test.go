@@ -13,7 +13,10 @@ func TestOutput(t *testing.T) {
 			SetSelect("asd", ""),
 			SetSelect("qwe", "qwe"),
 		), "poi"),
-	)
+	).SQLFrom(NewSQLGo().SQLSelect(
+		SetSelect("asd", ""),
+		SetSelect("qwe", "qwe"),
+	), "asd")
 
 	fmt.Println(sql.BuildSQL(), sql.GetParams())
 }
