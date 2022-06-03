@@ -1,6 +1,9 @@
 package sqlgo
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type SQLGoJoin struct {
 	values     []SQLGoJoinValue
@@ -52,12 +55,22 @@ func (sj *SQLGoJoin) BuildSQL() string {
 		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...).SetJoinScope()
 		switch vType := v.table.(type) {
 		case *SQLGo:
-			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s", sql, v.joinType, vType.SetParamsCount(sj.GetParamsCount()).BuildSQL(), v.alias, sqlWhere.SetParamsCount(vType.GetParamsCount()).BuildSQL())
+			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s",
+				sql,
+				strings.ToUpper(v.joinType),
+				vType.SetParamsCount(sj.GetParamsCount()).BuildSQL(),
+				v.alias,
+				sqlWhere.SetParamsCount(vType.GetParamsCount()).BuildSQL())
 			sj.SetParams(sqlWhere.GetParams()...).
 				SetParams(vType.GetParams()...).
 				SetParamsCount(sqlWhere.GetParamsCount())
 		default:
-			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s", sql, v.joinType, vType, v.alias, sqlWhere.SetParamsCount(sj.GetParamsCount()).BuildSQL())
+			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s",
+				sql,
+				strings.ToUpper(v.joinType),
+				vType,
+				v.alias,
+				sqlWhere.SetParamsCount(sj.GetParamsCount()).BuildSQL())
 			sj.SetParams(sqlWhere.GetParams()...)
 			sj.SetParamsCount(sqlWhere.GetParamsCount())
 		}

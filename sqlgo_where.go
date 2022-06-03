@@ -55,7 +55,7 @@ func (sw *SQLGoWhere) BuildSQL() string {
 	sql := "WHERE "
 	for i, v := range sw.values {
 		if i > 0 {
-			sql = fmt.Sprintf("%s %s ", sql, v.whereType)
+			sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(v.whereType))
 		}
 
 		operator := v.operator
