@@ -5,29 +5,34 @@ import (
 )
 
 type SQLGoSelect struct {
-	values     []sqlGoSelectValues
+	values     []SqlGoSelectValue
 	params     []interface{}
 	paramCount int
 }
 
-type sqlGoSelectValues struct {
-	Alias string
-	Value interface{}
+type SqlGoSelectValue struct {
+	alias string
+	value interface{}
 }
 
 func NewSQLGoSelect() *SQLGoSelect {
 	return &SQLGoSelect{}
 }
 
-func SetSelect(value interface{}, alias string) sqlGoSelectValues {
-	return sqlGoSelectValues{
-		Value: value,
-		Alias: alias,
+func SetSelect(value interface{}, alias string) SqlGoSelectValue {
+	return SqlGoSelectValue{
+		value: value,
+		alias: alias,
 	}
 }
 
-func (ss *SQLGoSelect) SQLSelect(values ...sqlGoSelectValues) *SQLGoSelect {
+func (ss *SQLGoSelect) SQLSelect(values ...SqlGoSelectValue) *SQLGoSelect {
 	ss.values = values
+	return ss
+}
+
+func (ss *SQLGoSelect) SetSQLSelect(value interface{}, alias string) *SQLGoSelect {
+	ss.values = append(ss.values, SetSelect(value, alias))
 	return ss
 }
 
@@ -42,7 +47,7 @@ func (ss *SQLGoSelect) BuildSQL() string {
 			sql = fmt.Sprintf("%s, ", sql)
 		}
 
-		switch vType := v.Value.(type) {
+		switch vType := v.value.(type) {
 		// case string:
 		// 	sql = fmt.Sprintf("%s%s", sql, vType)
 		case *SQLGo:
@@ -53,8 +58,8 @@ func (ss *SQLGoSelect) BuildSQL() string {
 			sql = fmt.Sprintf("%s%s", sql, vType)
 		}
 
-		if v.Alias != "" {
-			sql = fmt.Sprintf("%s AS %s", sql, v.Alias)
+		if v.alias != "" {
+			sql = fmt.Sprintf("%s AS %s", sql, v.alias)
 		}
 	}
 
