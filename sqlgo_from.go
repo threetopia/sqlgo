@@ -19,17 +19,19 @@ func (sg *SQLGoFrom) SQLFrom(table interface{}, alias string) *SQLGoFrom {
 	return sg
 }
 
-func (sf SQLGoFrom) BuildSQL() string {
+func (sf *SQLGoFrom) BuildSQL() string {
 	if sf.table == nil {
 		return ""
 	}
 
 	sql := "FROM "
 	switch vType := sf.table.(type) {
-	case string:
+	// case string:
+	// 	sql = fmt.Sprintf("%s%s", sql, vType)
+	case *SQLGo:
+		sql = fmt.Sprintf("%s(%s)", sql, vType.SetParams(sf.GetParams()...).SetParamsCount(sf.GetParamsCount()).BuildSQL())
+	default:
 		sql = fmt.Sprintf("%s%s", sql, vType)
-	case SQLGo:
-		sql = fmt.Sprintf("%s(%s)", sql, vType.SetParams(sf.GetParams()).SetParamsCount(sf.GetParamsCount()).BuildSQL())
 	}
 
 	if sf.alias != "" {
@@ -38,12 +40,15 @@ func (sf SQLGoFrom) BuildSQL() string {
 	return sql
 }
 
-func (sf *SQLGoFrom) SetParams(params []interface{}) *SQLGoFrom {
-	sf.params = params
+func (sf *SQLGoFrom) SetParams(params ...interface{}) *SQLGoFrom {
+	if len(params) < 1 {
+		return sf
+	}
+	sf.params = append(sf.params, params...)
 	return sf
 }
 
-func (sf SQLGoFrom) GetParams() []interface{} {
+func (sf *SQLGoFrom) GetParams() []interface{} {
 	return sf.params
 }
 
@@ -52,6 +57,6 @@ func (sf *SQLGoFrom) SetParamsCount(paramsCount int) *SQLGoFrom {
 	return sf
 }
 
-func (sf SQLGoFrom) GetParamsCount() int {
+func (sf *SQLGoFrom) GetParamsCount() int {
 	return sf.paramCount
 }
