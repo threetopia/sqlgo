@@ -142,7 +142,7 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 		} else {
 			sw.SetParams(vType)
 			sw.SetParamsCount(sw.GetParamsCount() + 1)
-			sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+			sql = fmt.Sprintf("%s%s%s($%d)", sql, v.whereColumn, v.operator, sw.GetParamsCount())
 		}
 	}
 	return sql

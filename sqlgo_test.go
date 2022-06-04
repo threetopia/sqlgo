@@ -61,7 +61,7 @@ func TestOutputChain(t *testing.T) {
 				SetSQLWhere("AND", "ert", "=", "yui").
 				SetSQLWhere("AND", "ghj", "=", "jkl").
 				SetSQLWhere("AND", "ghj", "IN", []int{1, 2, 3}).
-				SetSQLWhere("AND", "ghj", "ANY", []int{1, 2, 3}),
+				SetSQLWhere("OR", "ghj", "ANY", []int{1, 2, 3}),
 			"tbl", SetWhere("AND", "asd", "=", "asdasd")).
 		SetSQLWhere("AND", "column1", "=", "123").
 		SetSQLWhere("AND", "column1", "=", "123").
