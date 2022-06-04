@@ -77,9 +77,13 @@ func (sw *SQLGoWhere) BuildSQL() string {
 		case []float64:
 			sql = buildWhereSlice(sw, sql, operator, v, vType)
 		default:
-			sw.SetParams(vType)
-			sw.SetParamsCount(sw.GetParamsCount() + 1)
-			sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+			if sw.isJoinScope {
+				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, vType)
+			} else {
+				sw.SetParams(vType)
+				sw.SetParamsCount(sw.GetParamsCount() + 1)
+				sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+			}
 		}
 	}
 	if sw.isJoinScope {
@@ -133,9 +137,13 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 		}
 		sql = fmt.Sprintf("%s)", sql)
 	} else {
-		sw.SetParams(vType)
-		sw.SetParamsCount(sw.GetParamsCount() + 1)
-		sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+		if sw.isJoinScope {
+			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
+		} else {
+			sw.SetParams(vType)
+			sw.SetParamsCount(sw.GetParamsCount() + 1)
+			sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+		}
 	}
 	return sql
 }
