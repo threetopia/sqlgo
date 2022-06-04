@@ -3,6 +3,7 @@ package sqlgo
 import "fmt"
 
 type SQLGo struct {
+	sqlInsert  *SQLGOInsert
 	sqlSelect  *SQLGoSelect
 	sqlFrom    *SQLGoFrom
 	sqlJoin    *SQLGoJoin
@@ -13,6 +14,7 @@ type SQLGo struct {
 
 func NewSQLGo() *SQLGo {
 	return &SQLGo{
+		sqlInsert: NewSQLGOInsert(),
 		sqlSelect: NewSQLGoSelect(),
 		sqlFrom:   NewSQLGoFrom(),
 		sqlJoin:   NewSQLGoJoin(),
