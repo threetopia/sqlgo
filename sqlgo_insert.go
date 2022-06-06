@@ -61,7 +61,6 @@ func (si *SQLGOInsert) BuildSQL() string {
 	}
 
 	sql = fmt.Sprintf("%s)", sql)
-	fmt.Println(si.values)
 	sql = fmt.Sprintf("%s VALUES ", sql)
 	for iValues, vValues := range si.values {
 		if iValues > 0 {
