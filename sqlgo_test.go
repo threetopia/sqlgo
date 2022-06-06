@@ -5,85 +5,107 @@ import (
 	"testing"
 )
 
-func TestOutput(t *testing.T) {
-	// sql := NewSQLBuilder().SQLSelect(SQLValue{
-	// 	"ascol1": "col1",
-	// 	"ascol2": "col2",
-	// 	"asSubQ": NewSQLBuilder().SQLSelect(SQLValue{
-	// 		"ascol3": "col3",
-	// 		"ascol4": "col4",
-	// 	}),
-	// }).SQLFrom(SQLValue{"asTable": "table"})
-
-	sql := NewSQLBuilder().
-		SQLSelect(
-			SetSelect("column1", "alias1"),
-			SetSelect("column2", "alias2"),
-			SetSelect(
-				NewSQLBuilder().SQLSelect(
-					SetSelect("column3", "alias3"),
-				).
-					SQLFrom(SetFrom(NewSQLBuilder().
-						SQLSelect(SetSelect("qwe", "qwe")).
-						SQLFrom(SetFrom("qwe", "qwe")).SQLWhere(SetWhere("AND", "qwe", "=", "qwe"), SetWhere("AND", "qwe", "=", "qwe")), "alias3")).
-					SQLWhere(SetWhere("AND", "test1", "=", "1qwe"), SetWhere("AND", "test2", "=", "2qwe")),
-				"alias3"),
-			SetSelect("column4", "alias4"),
-		).
-		SQLFrom(SetFrom("table5", "alias5")).
-		SQLJoin(
-			SetJoin("LEFT", "joinTable", "jt",
-				SetWhere("AND", "jt.id", "=", "alias3.id"),
-				SetWhere("AND", "jt.id", "=", "alias2.id"),
-			),
-			SetJoin("INNER", "joinTable", "jt",
-				SetWhere("ON", "jt.id", "=", "alias3.id"),
-				SetWhere("AND", "jt.id", "=", "alias2.id"),
-			),
-			SetJoin("OUTER", NewSQLBuilder().
-				SQLSelect(SetSelect("asd", "asd")).
-				SQLFrom(SetFrom("asd", "asd")).
-				SQLWhere(SetWhere("AND", "asd", "=", "asd")), "jt",
-				SetWhere("ON", "jt.id", "=", "alias3.id"),
-				SetWhere("AND", "jt.id", "=", "alias2.id"),
-			),
-		).
+func TestOutputRegular(t *testing.T) {
+	sql := NewSQLGo().SQLSelect(
+		SetSelect("asd", ""),
+		SetSelect(NewSQLGo().SQLSelect(
+			SetSelect("asd", ""),
+			SetSelect("qwe", "qwe"),
+		).SQLFrom("poi", "poi").SQLWhere(
+			SetWhere("AND", "poi", "=", 1),
+			SetWhere("AND", "poi", "=", 2),
+			SetWhere("AND", "poi", "ANY", []string{"3", "3"}),
+			SetWhere("AND", "poi", "IN", []string{"4", "5"}),
+			SetWhere("AND", "poi", "=", 2),
+		), "qwe"),
+		SetSelect(NewSQLGo().SQLSelect(
+			SetSelect("asd", ""),
+			SetSelect("qwe", "qwe"),
+		).SQLFrom("poi", "poi").SQLWhere(
+			SetWhere("AND", "poi", "=", 6),
+		), "poi"),
+	).SQLFrom(NewSQLGo().SQLSelect(
+		SetSelect("asd", ""),
+		SetSelect("qwe", "qwe"),
+	).SQLFrom("asd", "").SQLWhere(
+		SetWhere("AND", "asd", "=", "7"),
+	), "asd").
+		SQLJoin(SetJoin("INNER", "table2", "tb2", SetWhere("AND", "test1", "=", "test2"), SetWhere("AND", "test1", "=", "test2"))).
+		SQLJoin(SetJoin("INNER", "table2", "tb2", SetWhere("AND", "test1", "=", "test2"), SetWhere("AND", "test1", "=", "test2"))).
 		SQLWhere(
-			SetWhere("AND", "alias1", "=", "qweqwe"),
-			SetWhere("AND", "alias2", "ANY", []string{"qwe", "12", "12"}),
-			SetWhere("AND", "alias3", "IN", []string{"12", "12", "12"}),
-			SetWhere("AND", "alias4", "ANY", []int{12, 12, 12}),
-			SetWhere("AND", "alias5", "IN",
-				NewSQLBuilder().SQLSelect(
-					SetSelect("asd", "asdAlias"),
-				).SQLFrom(SetFrom("testTable", "tt")).
-					SQLWhere(
-						SetWhere("AND", "tt.id", "=", "valuTable"),
-						SetWhere("OR", "tt.id", "=", "valuTable"),
-					),
-			),
+			SetWhere("AND", "asd", "=", "8"),
+			SetWhere("AND", "qwe", "=", "9"),
+		).SQLGroup("col1", "col2").SQLOffsetLimit(0, 10)
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
+
+func TestOutputChain(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSelect("asd", "asd").
+		SetSQLSelect("qwe", "qew").
+		SetSQLSelect(NewSQLGo().
+			SetSQLSelect("asd", "asd").
+			SetSQLSelect("qwe", "qew").
+			SetSQLFrom("vbn", "vbn").
+			SetSQLWhere("AND", "column1", "=", "123").
+			SetSQLWhere("AND", "column1", "=", "123"), "poi").
+		SetSQLFrom("table", "").
+		SetSQLJoin("INNER", "table", "tbl", SetWhere("ON", "asd", "=", "asdasd")).
+		SetSQLJoin("LEFT", "table", "tbl", SetWhere("ON", "asd", "=", "asdasd")).
+		SetSQLJoin("OUTER",
+			NewSQLGo().
+				SetSQLSelect("asd", "asd").
+				SetSQLFrom("asdTbl", "").
+				SetSQLJoin("OUTER", "tbl4", "tb4", SetWhere("ON", "col1", "=", "kljlj"), SetWhere("AND", "col1", "=", "kljlj")).
+				SetSQLWhere("AND", "ert", "=", "yui").
+				SetSQLWhere("AND", "ghj", "=", "jkl").
+				SetSQLWhere("AND", "ghj", "IN", []int{1, 2, 3}).
+				SetSQLWhere("OR", "ghj", "ANY", []int{1, 2, 3}),
+			"tbl", SetWhere("AND", "asd", "=", "asdasd")).
+		SetSQLWhere("AND", "column1", "=", "123").
+		SetSQLWhere("AND", "column1", "=", "123").
+		SetSQLWhere("AND", "column1", "=", "123").
+		SetSQLGroup("col1", "col2").
+		SetSQLOffset(0).
+		SetSQLLimit(100)
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
+
+func TestInsert(t *testing.T) {
+	sql := NewSQLGo().
+		SQLInsert("test", SetInsertColumns("colA", "colB"),
+			SetInsertValues("colA1", "colB1"),
+			SetInsertValues("colA2", "colB2"),
+			SetInsertValues("colA3", "colB3"),
 		)
-
-	fmt.Println(sql.BuildSQL(), sql.GetParams())
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
 
-func TestInsertOutput(t *testing.T) {
-	sql := NewSQLBuilder().SQLInsert("test",
-		SetColumns("columnASD", "columnQWE"),
-		SetValues("asd1", "qwe1"),
-		SetValues("asd2", "qwe2"),
-		SetValues("asd3", "qwe3"),
-		SetValues("asd4", "qwe4"),
-	)
-	fmt.Println(sql.BuildSQL(), sql.GetParams())
+func TestInsertChain(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLInsert("test").
+		SetSQLInsertColumn("colA", "colB").
+		SetSQLInsertValue("colA1", "colB1").
+		SetSQLInsertValue("colA2", "colB2").
+		SetSQLInsertValue("colA3", "colB3")
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
 
-func TestUpdatetOutput(t *testing.T) {
-	sql := NewSQLBuilder().SQLUpdate("test",
-		SetUpdate("asd1", "qwe1"),
-		SetUpdate("asd2", "qwe2"),
-		SetUpdate("asd3", "qwe3"),
-		SetUpdate("asd4", "qwe4"),
-	)
-	fmt.Println(sql.BuildSQL(), sql.GetParams())
+func TestUpdate(t *testing.T) {
+	sql := NewSQLGo().
+		SQLUpdate("table",
+			SetUpdate("asdasd", "asdsad"),
+			SetUpdate("qwerty", "qwerty"),
+		).SQLWhere(SetWhere("AND", "asd", "=", 123), SetWhere("AND", "qwe", "=", 456))
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
+
+func TestUpdateChain(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLUpdate("table").
+		SetSQLUpdateValue("asdasd", "asdasd").
+		SetSQLUpdateValue("qwerty", "qwerty").
+		SetSQLWhere("AND", "asd", "=", 123).
+		SetSQLWhere("AND", "qwe", "=", 456)
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
