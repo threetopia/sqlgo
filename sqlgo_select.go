@@ -31,11 +31,6 @@ func (ss *SQLGoSelect) SQLSelect(values ...SqlGoSelectValue) *SQLGoSelect {
 	return ss
 }
 
-func (ss *SQLGoSelect) SetSQLSelect(value interface{}, alias string) *SQLGoSelect {
-	ss.values = append(ss.values, SetSelect(value, alias))
-	return ss
-}
-
 func (ss *SQLGoSelect) BuildSQL() string {
 	if len(ss.values) < 1 {
 		return ""

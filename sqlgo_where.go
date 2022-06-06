@@ -42,11 +42,6 @@ func (sw *SQLGoWhere) SQLWhere(values ...SqlGoWhereValue) *SQLGoWhere {
 	return sw
 }
 
-func (sw *SQLGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) *SQLGoWhere {
-	sw.values = append(sw.values, SetWhere(whereType, whereColumn, operator, value))
-	return sw
-}
-
 func (sw *SQLGoWhere) BuildSQL() string {
 	if len(sw.values) < 1 {
 		return ""

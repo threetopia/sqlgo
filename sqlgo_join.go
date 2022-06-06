@@ -36,11 +36,6 @@ func (sj *SQLGoJoin) SQLJoin(values ...SQLGoJoinValue) *SQLGoJoin {
 	return sj
 }
 
-func (sj *SQLGoJoin) SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) *SQLGoJoin {
-	sj.values = append(sj.values, SetJoin(joinType, table, alias, sqlWhere...))
-	return sj
-}
-
 func (sj *SQLGoJoin) BuildSQL() string {
 	if len(sj.values) < 1 {
 		return ""

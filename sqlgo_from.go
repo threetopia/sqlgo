@@ -19,10 +19,6 @@ func (sg *SQLGoFrom) SQLFrom(table interface{}, alias string) *SQLGoFrom {
 	return sg
 }
 
-func (sg *SQLGoFrom) SetSQLFrom(table interface{}, alias string) *SQLGoFrom {
-	return sg.SQLFrom(table, alias)
-}
-
 func (sf *SQLGoFrom) BuildSQL() string {
 	if sf.table == nil {
 		return ""

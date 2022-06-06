@@ -3,22 +3,26 @@ package sqlgo
 import "fmt"
 
 type SQLGo struct {
-	sqlInsert  *SQLGOInsert
-	sqlSelect  *SQLGoSelect
-	sqlFrom    *SQLGoFrom
-	sqlJoin    *SQLGoJoin
-	sqlWhere   *SQLGoWhere
-	params     []interface{}
-	paramCount int
+	sqlInsert      *SQLGOInsert
+	sqlSelect      *SQLGoSelect
+	sqlFrom        *SQLGoFrom
+	sqlJoin        *SQLGoJoin
+	sqlWhere       *SQLGoWhere
+	sqlGroup       *SQLGoGroup
+	sqlOffsetLimit *SQLGoOffsetLimit
+	params         []interface{}
+	paramCount     int
 }
 
 func NewSQLGo() *SQLGo {
 	return &SQLGo{
-		sqlInsert: NewSQLGOInsert(),
-		sqlSelect: NewSQLGoSelect(),
-		sqlFrom:   NewSQLGoFrom(),
-		sqlJoin:   NewSQLGoJoin(),
-		sqlWhere:  NewSQLGoWhere(),
+		sqlInsert:      NewSQLGOInsert(),
+		sqlSelect:      NewSQLGoSelect(),
+		sqlFrom:        NewSQLGoFrom(),
+		sqlJoin:        NewSQLGoJoin(),
+		sqlWhere:       NewSQLGoWhere(),
+		sqlGroup:       NewSQLGoGroup(),
+		sqlOffsetLimit: NewSQLGoOffsetLimit(),
 	}
 }
 
@@ -33,7 +37,7 @@ func (sg *SQLGo) SetSQLInsert(table string) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGo {
-	sg.sqlInsert.SetSQLInsertColumn(SetInsertColumns(columns...))
+	sg.sqlInsert.SetSQLInsertColumn(columns...)
 	return sg
 }
 
@@ -48,7 +52,7 @@ func (sg *SQLGo) SQLSelect(values ...SqlGoSelectValue) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLSelect(value interface{}, alias string) *SQLGo {
-	sg.sqlSelect.SetSQLSelect(value, alias)
+	sg.SQLSelect(SetSelect(value, alias))
 	return sg
 }
 
@@ -57,18 +61,18 @@ func (sg *SQLGo) SQLFrom(table interface{}, alias string) *SQLGo {
 	return sg
 }
 
+func (sg *SQLGo) SetSQLFrom(table interface{}, alias string) *SQLGo {
+	return sg.SQLFrom(table, alias)
+}
+
 func (sg *SQLGo) SQLJoin(values ...SQLGoJoinValue) *SQLGo {
 	sg.sqlJoin.SQLJoin(values...)
 	return sg
 }
 
 func (sg *SQLGo) SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) *SQLGo {
-	sg.sqlJoin.SetSQLJoin(joinType, table, alias, sqlWhere...)
+	sg.SQLJoin(SetJoin(joinType, table, alias, sqlWhere...))
 	return sg
-}
-
-func (sg *SQLGo) SetSQLFrom(table interface{}, alias string) *SQLGo {
-	return sg.SQLFrom(table, alias)
 }
 
 func (sg *SQLGo) SQLWhere(values ...SqlGoWhereValue) *SQLGo {
@@ -77,7 +81,32 @@ func (sg *SQLGo) SQLWhere(values ...SqlGoWhereValue) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) *SQLGo {
-	sg.sqlWhere.SetSQLWhere(whereType, whereColumn, operator, value)
+	sg.SQLWhere(SetWhere(whereType, whereColumn, operator, value))
+	return sg
+}
+
+func (sg *SQLGo) SQLGroup(columns ...SQLGoGroupColumn) *SQLGo {
+	sg.sqlGroup.SQLGroup(columns...)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLGroup(columns ...SQLGoGroupColumn) *SQLGo {
+	sg.SQLGroup(columns...)
+	return sg
+}
+
+func (sg *SQLGo) SQLOffsetLimit(offset int, limit int) *SQLGo {
+	sg.sqlOffsetLimit.SQLOffsetLimit(offset, limit)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLOffset(offset int) *SQLGo {
+	sg.sqlOffsetLimit.SetSQLOffset(offset)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLLimit(limit int) *SQLGo {
+	sg.sqlOffsetLimit.SetSQLLimit(limit)
 	return sg
 }
 
@@ -112,6 +141,12 @@ func (sg *SQLGo) BuildSQL() string {
 		sql = fmt.Sprintf("%s %s", sql, sqlWhere)
 		sg.SetParams(sg.sqlWhere.GetParams()...)
 		sg.SetParamsCount(sg.sqlWhere.GetParamsCount())
+	}
+	if sqlGroup := sg.sqlGroup.BuildSQL(); sqlGroup != "" {
+		sql = fmt.Sprintf("%s %s", sql, sqlGroup)
+	}
+	if sqlOffsetLimit := sg.sqlOffsetLimit.BuildSQL(); sqlOffsetLimit != "" {
+		sql = fmt.Sprintf("%s %s", sql, sqlOffsetLimit)
 	}
 	return sql
 }

@@ -38,7 +38,7 @@ func (si *SQLGOInsert) SetSQLInsert(table string) *SQLGOInsert {
 	return si
 }
 
-func (si *SQLGOInsert) SetSQLInsertColumn(columns []SQLGoInsertColumn) *SQLGOInsert {
+func (si *SQLGOInsert) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGOInsert {
 	si.columns = append(si.columns, columns...)
 	return si
 }
