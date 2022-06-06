@@ -1,45 +1,84 @@
 package sqlgo
 
+import "fmt"
+
 type SQLGOInsert struct {
 	table      string
 	columns    []SQLGoInsertColumn
-	values     [][]interface{}
+	values     [][]SQLGoInsertValue
 	params     []interface{}
 	paramCount int
 }
 
 type SQLGoInsertColumn string
 
-type SQLGoInsertValue []interface{}
+type SQLGoInsertValue interface{}
 
 func NewSQLGOInsert() *SQLGOInsert {
 	return &SQLGOInsert{}
 }
 
-func SetInsColumns(columns ...string) []string {
+func SetInsertColumns(columns ...SQLGoInsertColumn) []SQLGoInsertColumn {
 	return columns
 }
 
-func SetInsValues(values ...interface{}) []interface{} {
+func SetInsertValues(values ...SQLGoInsertValue) []SQLGoInsertValue {
 	return values
 }
 
-func (si *SQLGOInsert) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]interface{}) *SQLGOInsert {
+func (si *SQLGOInsert) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]SQLGoInsertValue) *SQLGOInsert {
 	si.table = table
 	si.columns = append(si.columns, columns...)
 	si.values = append(si.values, values...)
 	return si
 }
 
-func (si *SQLGOInsert) SetSQLInsert(table string, columns []SQLGoInsertColumn, values ...[]interface{}) *SQLGOInsert {
+func (si *SQLGOInsert) SetSQLInsert(table string) *SQLGOInsert {
 	si.table = table
+	return si
+}
+
+func (si *SQLGOInsert) SetSQLInsertColumn(columns []SQLGoInsertColumn) *SQLGOInsert {
 	si.columns = append(si.columns, columns...)
+	return si
+}
+
+func (si *SQLGOInsert) SetSQLInsertValue(values ...[]SQLGoInsertValue) *SQLGOInsert {
 	si.values = append(si.values, values...)
 	return si
 }
 
 func (si *SQLGOInsert) BuildSQL() string {
-	sql := ""
+	if len(si.columns) < 1 {
+		return ""
+	}
+	sql := fmt.Sprintf("INSERT %s (", si.table)
+	for i, v := range si.columns {
+		if i > 0 {
+			sql = fmt.Sprintf("%s, ", sql)
+		}
+		sql = fmt.Sprintf("%s%s", sql, v)
+	}
+
+	sql = fmt.Sprintf("%s)", sql)
+	fmt.Println(si.values)
+	sql = fmt.Sprintf("%s VALUES ", sql)
+	for iValues, vValues := range si.values {
+		if iValues > 0 {
+			sql = fmt.Sprintf("%s, ", sql)
+		}
+
+		sql = fmt.Sprintf("%s(", sql)
+		for iValue, vValue := range vValues {
+			if iValue > 0 {
+				sql = fmt.Sprintf("%s, ", sql)
+			}
+			si.SetParams(vValue)
+			si.SetParamsCount(si.GetParamsCount() + 1)
+			sql = fmt.Sprintf("%s$%d", sql, si.GetParamsCount())
+		}
+		sql = fmt.Sprintf("%s)", sql)
+	}
 	return sql
 }
 

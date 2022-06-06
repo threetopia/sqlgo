@@ -22,6 +22,26 @@ func NewSQLGo() *SQLGo {
 	}
 }
 
+func (sg *SQLGo) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]SQLGoInsertValue) *SQLGo {
+	sg.sqlInsert.SQLInsert(table, columns, values...)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLInsert(table string) *SQLGo {
+	sg.sqlInsert.SetSQLInsert(table)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGo {
+	sg.sqlInsert.SetSQLInsertColumn(SetInsertColumns(columns...))
+	return sg
+}
+
+func (sg *SQLGo) SetSQLInsertValue(values ...SQLGoInsertValue) *SQLGo {
+	sg.sqlInsert.SetSQLInsertValue(SetInsertValues(values...))
+	return sg
+}
+
 func (sg *SQLGo) SQLSelect(values ...SqlGoSelectValue) *SQLGo {
 	sg.sqlSelect.SQLSelect(values...)
 	return sg
@@ -68,6 +88,11 @@ func (sg *SQLGo) SetJoinScope() *SQLGo {
 
 func (sg *SQLGo) BuildSQL() string {
 	sql := ""
+	if sqlInsert := sg.sqlInsert.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlInsert != "" {
+		sql = fmt.Sprintf("%s%s", sql, sqlInsert)
+		sg.SetParams(sg.sqlInsert.GetParams()...)
+		sg.SetParamsCount(sg.sqlInsert.GetParamsCount())
+	}
 	if sqlSelect := sg.sqlSelect.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlSelect != "" {
 		sql = fmt.Sprintf("%s%s", sql, sqlSelect)
 		sg.SetParams(sg.sqlSelect.GetParams()...)
