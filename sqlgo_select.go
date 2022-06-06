@@ -27,7 +27,7 @@ func SetSelect(value interface{}, alias string) SqlGoSelectValue {
 }
 
 func (ss *SQLGoSelect) SQLSelect(values ...SqlGoSelectValue) *SQLGoSelect {
-	ss.values = values
+	ss.values = append(ss.values, values...)
 	return ss
 }
 
