@@ -4,6 +4,7 @@ import "fmt"
 
 type SQLGo struct {
 	sqlInsert      *SQLGOInsert
+	sqlUpdate      *SQLGoUpdate
 	sqlSelect      *SQLGoSelect
 	sqlFrom        *SQLGoFrom
 	sqlJoin        *SQLGoJoin
@@ -17,6 +18,7 @@ type SQLGo struct {
 func NewSQLGo() *SQLGo {
 	return &SQLGo{
 		sqlInsert:      NewSQLGOInsert(),
+		sqlUpdate:      NewSQLGoUpdate(),
 		sqlSelect:      NewSQLGoSelect(),
 		sqlFrom:        NewSQLGoFrom(),
 		sqlJoin:        NewSQLGoJoin(),
@@ -31,18 +33,33 @@ func (sg *SQLGo) SQLInsert(table string, columns []SQLGoInsertColumn, values ...
 	return sg
 }
 
+func (sg *SQLGo) SQLUpdate(table string, values ...SQLGoUpdateValue) *SQLGo {
+	sg.sqlUpdate.SQLUpdate(table, values...)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLUpdate(table string) *SQLGo {
+	sg.sqlUpdate.setSQLUpdateTable(table)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLUpdateValue(column string, value interface{}) *SQLGo {
+	sg.sqlUpdate.setSQLUpdateValue(SetUpdate(column, value))
+	return sg
+}
+
 func (sg *SQLGo) SetSQLInsert(table string) *SQLGo {
-	sg.sqlInsert.SetSQLInsert(table)
+	sg.sqlInsert.setSQLInsertTable(table)
 	return sg
 }
 
 func (sg *SQLGo) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGo {
-	sg.sqlInsert.SetSQLInsertColumn(columns...)
+	sg.sqlInsert.setSQLInsertColumn(columns...)
 	return sg
 }
 
 func (sg *SQLGo) SetSQLInsertValue(values ...SQLGoInsertValue) *SQLGo {
-	sg.sqlInsert.SetSQLInsertValue(SetInsertValues(values...))
+	sg.sqlInsert.setSQLInsertValue(SetInsertValues(values...))
 	return sg
 }
 
@@ -121,6 +138,11 @@ func (sg *SQLGo) BuildSQL() string {
 		sql = fmt.Sprintf("%s%s", sql, sqlInsert)
 		sg.SetParams(sg.sqlInsert.GetParams()...)
 		sg.SetParamsCount(sg.sqlInsert.GetParamsCount())
+	}
+	if sqlUpdate := sg.sqlUpdate.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlUpdate != "" {
+		sql = fmt.Sprintf("%s%s", sql, sqlUpdate)
+		sg.SetParams(sg.sqlUpdate.GetParams()...)
+		sg.SetParamsCount(sg.sqlUpdate.GetParamsCount())
 	}
 	if sqlSelect := sg.sqlSelect.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlSelect != "" {
 		sql = fmt.Sprintf("%s%s", sql, sqlSelect)

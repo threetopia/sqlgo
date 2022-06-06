@@ -27,23 +27,23 @@ func SetInsertValues(values ...SQLGoInsertValue) []SQLGoInsertValue {
 }
 
 func (si *SQLGOInsert) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]SQLGoInsertValue) *SQLGOInsert {
+	si.setSQLInsertTable(table)
+	si.setSQLInsertColumn(columns...)
+	si.setSQLInsertValue(values...)
+	return si
+}
+
+func (si *SQLGOInsert) setSQLInsertTable(table string) *SQLGOInsert {
 	si.table = table
-	si.columns = append(si.columns, columns...)
-	si.values = append(si.values, values...)
 	return si
 }
 
-func (si *SQLGOInsert) SetSQLInsert(table string) *SQLGOInsert {
-	si.table = table
-	return si
-}
-
-func (si *SQLGOInsert) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGOInsert {
+func (si *SQLGOInsert) setSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGOInsert {
 	si.columns = append(si.columns, columns...)
 	return si
 }
 
-func (si *SQLGOInsert) SetSQLInsertValue(values ...[]SQLGoInsertValue) *SQLGOInsert {
+func (si *SQLGOInsert) setSQLInsertValue(values ...[]SQLGoInsertValue) *SQLGOInsert {
 	si.values = append(si.values, values...)
 	return si
 }

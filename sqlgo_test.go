@@ -90,3 +90,22 @@ func TestInsertChain(t *testing.T) {
 		SetSQLInsertValue("colA3", "colB3")
 	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
+
+func TestUpdate(t *testing.T) {
+	sql := NewSQLGo().
+		SQLUpdate("table",
+			SetUpdate("asdasd", "asdsad"),
+			SetUpdate("qwerty", "qwerty"),
+		).SQLWhere(SetWhere("AND", "asd", "=", 123), SetWhere("AND", "qwe", "=", 456))
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
+
+func TestUpdateChain(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLUpdate("table").
+		SetSQLUpdateValue("asdasd", "asdasd").
+		SetSQLUpdateValue("qwerty", "qwerty").
+		SetSQLWhere("AND", "asd", "=", 123).
+		SetSQLWhere("AND", "qwe", "=", 456)
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
