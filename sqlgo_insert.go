@@ -52,7 +52,7 @@ func (si *SQLGOInsert) BuildSQL() string {
 	if len(si.columns) < 1 {
 		return ""
 	}
-	sql := fmt.Sprintf("INSERT %s (", si.table)
+	sql := fmt.Sprintf("INSERT INTO %s (", si.table)
 	for i, v := range si.columns {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
