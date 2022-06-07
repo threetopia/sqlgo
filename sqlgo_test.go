@@ -30,8 +30,8 @@ func TestOutputRegular(t *testing.T) {
 	).SQLFrom("asd", "").SQLWhere(
 		SetWhere("AND", "asd", "=", "7"),
 	), "asd").
-		SQLJoin(SetJoin("INNER", "table2", "tb2", SetWhere("AND", "test1", "=", "test2"), SetWhere("AND", "test1", "=", "test2"))).
-		SQLJoin(SetJoin("INNER", "table2", "tb2", SetWhere("AND", "test1", "=", "test2"), SetWhere("AND", "test1", "=", "test2"))).
+		SQLJoin(SetJoin("INNER", "table2", "tb2", SetJoinWhere("AND", "test1", "=", "test2"), SetJoinWhere("AND", "test1", "=", "test2"))).
+		SQLJoin(SetJoin("INNER", "table2", "tb2", SetJoinWhere("AND", "test1", "=", "test2"), SetJoinWhere("AND", "test1", "=", "test2"))).
 		SQLWhere(
 			SetWhere("AND", "asd", "=", "8"),
 			SetWhere("AND", "qwe", "=", "9"),
@@ -50,13 +50,14 @@ func TestOutputChain(t *testing.T) {
 			SetSQLWhere("AND", "column1", "=", "123").
 			SetSQLWhere("AND", "column1", "=", "123"), "poi").
 		SetSQLFrom("table", "").
-		SetSQLJoin("INNER", "table", "tbl", SetWhere("ON", "asd", "=", "asdasd")).
-		SetSQLJoin("LEFT", "table", "tbl", SetWhere("ON", "asd", "=", "asdasd")).
+		SetSQLJoin("INNER", "table", "tbl", SetJoinWhere("ON", "asd", "=", "asdasd")).
+		SetSQLJoin("LEFT", "table", "tbl", SetJoinWhere("ON", "asd", "=", "asdasd")).
 		SetSQLJoin("OUTER",
 			NewSQLGo().
 				SetSQLSelect("asd", "asd").
 				SetSQLFrom("asdTbl", "").
-				SetSQLJoin("OUTER", "tbl4", "tb4", SetWhere("ON", "col1", "=", "kljlj"), SetWhere("AND", "col1", "=", "kljlj")).
+				SetSQLJoin("OUTER", "tbl4", "tb4", SetJoinWhere("ON", "col1", "=", "kljlj"), SetJoinWhere("AND", "col1", "=", "kljlj")).
+				SetSQLJoin("OUTER", "tbl5", "tb5", SetJoinWhere("ON", "col1", "=", "kljlj"), SetJoinWhere("AND", "col1", "=", "kljlj")).
 				SetSQLWhere("AND", "ert", "=", "yui").
 				SetSQLWhere("AND", "ghj", "=", "jkl").
 				SetSQLWhere("AND", "ghj", "IN", []int{1, 2, 3}).

@@ -28,23 +28,9 @@ func NewSQLGo() *SQLGo {
 	}
 }
 
+//
 func (sg *SQLGo) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]SQLGoInsertValue) *SQLGo {
 	sg.sqlInsert.SQLInsert(table, columns, values...)
-	return sg
-}
-
-func (sg *SQLGo) SQLUpdate(table string, values ...SQLGoUpdateValue) *SQLGo {
-	sg.sqlUpdate.SQLUpdate(table, values...)
-	return sg
-}
-
-func (sg *SQLGo) SetSQLUpdate(table string) *SQLGo {
-	sg.sqlUpdate.setSQLUpdateTable(table)
-	return sg
-}
-
-func (sg *SQLGo) SetSQLUpdateValue(column string, value interface{}) *SQLGo {
-	sg.sqlUpdate.setSQLUpdateValue(SetUpdate(column, value))
 	return sg
 }
 
@@ -60,6 +46,21 @@ func (sg *SQLGo) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGo {
 
 func (sg *SQLGo) SetSQLInsertValue(values ...SQLGoInsertValue) *SQLGo {
 	sg.sqlInsert.setSQLInsertValue(SetInsertValues(values...))
+	return sg
+}
+
+func (sg *SQLGo) SQLUpdate(table string, values ...SQLGoUpdateValue) *SQLGo {
+	sg.sqlUpdate.SQLUpdate(table, values...)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLUpdate(table string) *SQLGo {
+	sg.sqlUpdate.setSQLUpdateTable(table)
+	return sg
+}
+
+func (sg *SQLGo) SetSQLUpdateValue(column string, value interface{}) *SQLGo {
+	sg.sqlUpdate.setSQLUpdateValue(SetUpdate(column, value))
 	return sg
 }
 
@@ -124,11 +125,6 @@ func (sg *SQLGo) SetSQLOffset(offset int) *SQLGo {
 
 func (sg *SQLGo) SetSQLLimit(limit int) *SQLGo {
 	sg.sqlOffsetLimit.SetSQLLimit(limit)
-	return sg
-}
-
-func (sg *SQLGo) SetJoinScope() *SQLGo {
-	sg.sqlWhere.setJoinScope()
 	return sg
 }
 

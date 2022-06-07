@@ -22,6 +22,10 @@ func NewSQLGoJoin() *SQLGoJoin {
 	return &SQLGoJoin{}
 }
 
+func SetJoinWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
+	return SetWhereNotParam(whereType, whereColumn, operator, value)
+}
+
 func SetJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) SQLGoJoinValue {
 	return SQLGoJoinValue{
 		joinType: joinType,
@@ -47,7 +51,7 @@ func (sj *SQLGoJoin) BuildSQL() string {
 			sql = fmt.Sprintf("%s ", sql)
 		}
 
-		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...).SetJoinScope()
+		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...)
 		switch vType := v.table.(type) {
 		case *SQLGo:
 			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s",
@@ -71,7 +75,7 @@ func (sj *SQLGoJoin) BuildSQL() string {
 		}
 	}
 
-	return sql
+	return strings.ReplaceAll(sql, "WHERE ", "ON ")
 }
 
 func (sj *SQLGoJoin) SetParams(params ...interface{}) *SQLGoJoin {

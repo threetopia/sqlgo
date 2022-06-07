@@ -12,10 +12,9 @@ var specialOperator = map[string]string{
 }
 
 type SQLGoWhere struct {
-	values      []SqlGoWhereValue
-	params      []interface{}
-	paramCount  int
-	isJoinScope bool
+	values     []SqlGoWhereValue
+	params     []interface{}
+	paramCount int
 }
 
 type SqlGoWhereValue struct {
@@ -23,6 +22,7 @@ type SqlGoWhereValue struct {
 	whereColumn string
 	operator    string
 	value       interface{}
+	isParam     bool
 }
 
 func NewSQLGoWhere() *SQLGoWhere {
@@ -35,6 +35,17 @@ func SetWhere(whereType string, whereColumn string, operator string, value inter
 		whereColumn: whereColumn,
 		operator:    operator,
 		value:       value,
+		isParam:     true,
+	}
+}
+
+func SetWhereNotParam(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
+	return SqlGoWhereValue{
+		whereType:   whereType,
+		whereColumn: whereColumn,
+		operator:    operator,
+		value:       value,
+		isParam:     false,
 	}
 }
 
@@ -73,7 +84,7 @@ func (sw *SQLGoWhere) BuildSQL() string {
 		case []float64:
 			sql = buildWhereSlice(sw, sql, operator, v, vType)
 		default:
-			if sw.isJoinScope {
+			if !v.isParam {
 				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, vType)
 			} else {
 				sw.SetParams(vType)
@@ -81,9 +92,6 @@ func (sw *SQLGoWhere) BuildSQL() string {
 				sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
 			}
 		}
-	}
-	if sw.isJoinScope {
-		sql = strings.ReplaceAll(sql, "WHERE ", "ON ")
 	}
 
 	return sql
@@ -110,11 +118,6 @@ func (sw *SQLGoWhere) GetParamsCount() int {
 	return sw.paramCount
 }
 
-func (sw *SQLGoWhere) setJoinScope() *SQLGoWhere {
-	sw.isJoinScope = true
-	return sw
-}
-
 func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere, sql string, operator string, v SqlGoWhereValue, vType []V) string {
 	if operator == "IN" {
 		sql = fmt.Sprintf("%s%s%s(", sql, v.whereColumn, v.operator)
@@ -123,7 +126,7 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 				sql = fmt.Sprintf("%s, ", sql)
 			}
 
-			if sw.isJoinScope {
+			if !v.isParam {
 				sql = fmt.Sprintf("%s%x", sql, vIn)
 			} else {
 				sw.SetParams(vIn)
@@ -133,7 +136,7 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 		}
 		sql = fmt.Sprintf("%s)", sql)
 	} else {
-		if sw.isJoinScope {
+		if !v.isParam {
 			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
 		} else {
 			sw.SetParams(vType)
