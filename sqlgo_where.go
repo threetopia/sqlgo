@@ -6,9 +6,10 @@ import (
 )
 
 var specialOperator = map[string]string{
-	"ANY":  "= ANY ",
-	"IN":   " IN ",
-	"LIKE": " LIKE ",
+	"ANY":   "= ANY ",
+	"IN":    " IN ",
+	"LIKE":  " LIKE ",
+	"ILIKE": " ILIKE ",
 }
 
 type SQLGoWhere struct {
@@ -65,8 +66,8 @@ func (sw *SQLGoWhere) BuildSQL() string {
 			sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(v.whereType))
 		}
 
-		operator := v.operator
-		if vo, ok := specialOperator[v.operator]; ok {
+		operator := strings.ToUpper(v.operator)
+		if vo, ok := specialOperator[operator]; ok {
 			v.operator = vo
 		}
 
