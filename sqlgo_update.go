@@ -36,7 +36,7 @@ func (su *SQLGoUpdate) BuildSQL() string {
 		return ""
 	}
 
-	sql := fmt.Sprintf("UPDATE %s SET (", su.table)
+	sql := fmt.Sprintf("UPDATE %s SET ", su.table)
 	for i, v := range su.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
@@ -45,7 +45,6 @@ func (su *SQLGoUpdate) BuildSQL() string {
 		su.SetParamsCount(su.GetParamsCount() + 1)
 		sql = fmt.Sprintf("%s%s=$%d", sql, v.column, su.GetParamsCount())
 	}
-	sql = fmt.Sprintf("%s)", sql)
 	return sql
 }
 
