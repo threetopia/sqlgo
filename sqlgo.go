@@ -5,6 +5,7 @@ import "fmt"
 type SQLGo struct {
 	sqlInsert      *SQLGOInsert
 	sqlUpdate      *SQLGoUpdate
+	sqlDelete      *SQLGoDelete
 	sqlSelect      *SQLGoSelect
 	sqlFrom        *SQLGoFrom
 	sqlJoin        *SQLGoJoin
@@ -19,6 +20,7 @@ func NewSQLGo() *SQLGo {
 	return &SQLGo{
 		sqlInsert:      NewSQLGOInsert(),
 		sqlUpdate:      NewSQLGoUpdate(),
+		sqlDelete:      NewSQLGoDelete(),
 		sqlSelect:      NewSQLGoSelect(),
 		sqlFrom:        NewSQLGoFrom(),
 		sqlJoin:        NewSQLGoJoin(),
@@ -61,6 +63,11 @@ func (sg *SQLGo) SetSQLUpdate(table string) *SQLGo {
 
 func (sg *SQLGo) SetSQLUpdateValue(column string, value interface{}) *SQLGo {
 	sg.sqlUpdate.setSQLUpdateValue(SetUpdate(column, value))
+	return sg
+}
+
+func (sg *SQLGo) SQLDelete(table string) *SQLGo {
+	sg.sqlDelete.SQLDelete(table)
 	return sg
 }
 
@@ -139,6 +146,11 @@ func (sg *SQLGo) BuildSQL() string {
 		sql = fmt.Sprintf("%s%s", sql, sqlUpdate)
 		sg.SetParams(sg.sqlUpdate.GetParams()...)
 		sg.SetParamsCount(sg.sqlUpdate.GetParamsCount())
+	}
+	if sqlDelete := sg.sqlDelete.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlDelete != "" {
+		sql = fmt.Sprintf("%s%s", sql, sqlDelete)
+		sg.SetParams(sg.sqlDelete.GetParams()...)
+		sg.SetParamsCount(sg.sqlDelete.GetParamsCount())
 	}
 	if sqlSelect := sg.sqlSelect.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlSelect != "" {
 		sql = fmt.Sprintf("%s%s", sql, sqlSelect)

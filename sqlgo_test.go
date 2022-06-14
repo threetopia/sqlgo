@@ -1,6 +1,7 @@
 package sqlgo
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -30,4 +31,10 @@ func TestGenericQueryChainWay(t *testing.T) {
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("reuslt must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
 	}
+}
+func TestDelet(t *testing.T) {
+	sql := NewSQLGo().
+		SQLDelete("table").
+		SetSQLWhere("AND", "asd", "=", "qwe")
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
