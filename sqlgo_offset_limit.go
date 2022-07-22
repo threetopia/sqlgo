@@ -31,7 +31,7 @@ func (slo *SQLGoOffsetLimit) SetSQLOffset(offset int) *SQLGoOffsetLimit {
 
 func (slo *SQLGoOffsetLimit) SQLPageLimit(page int, limit int) *SQLGoOffsetLimit {
 	slo.limit = limit
-	slo.offset = page * limit
+	slo.offset = (page - 1) * limit
 	return slo
 }
 

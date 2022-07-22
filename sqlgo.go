@@ -136,7 +136,7 @@ func (sg *SQLGo) SetSQLLimit(limit int) *SQLGo {
 }
 
 func (sg *SQLGo) SQLPageLimit(page int, limit int) *SQLGo {
-	sg.sqlOffsetLimit.SQLPageLimit(page-1, limit)
+	sg.sqlOffsetLimit.SQLPageLimit(page, limit)
 	return sg
 }
 
