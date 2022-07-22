@@ -29,13 +29,22 @@ func (slo *SQLGoOffsetLimit) SetSQLOffset(offset int) *SQLGoOffsetLimit {
 	return slo
 }
 
+func (slo *SQLGoOffsetLimit) SQLPageLimit(page int, limit int) *SQLGoOffsetLimit {
+	slo.limit = limit
+	slo.offset = page * limit
+	return slo
+}
+
 func (ss *SQLGoOffsetLimit) BuildSQL() string {
 	sql := ""
 	if ss.offset >= 0 {
-		sql = fmt.Sprintf("%s OFFSET %d", sql, ss.offset)
+		sql = fmt.Sprintf("%sOFFSET %d", sql, ss.offset)
 	}
 	if ss.limit > 0 {
-		sql = fmt.Sprintf("%s LIMIT %d", sql, ss.limit)
+		if sql != "" {
+			sql = fmt.Sprintf("%s ", sql)
+		}
+		sql = fmt.Sprintf("%sLIMIT %d", sql, ss.limit)
 	}
 	return sql
 }

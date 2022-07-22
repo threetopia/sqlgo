@@ -32,9 +32,21 @@ func TestGenericQueryChainWay(t *testing.T) {
 		t.Errorf("reuslt must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
 	}
 }
-func TestDelet(t *testing.T) {
+func TestDelete(t *testing.T) {
 	sql := NewSQLGo().
 		SQLDelete("table").
 		SetSQLWhere("AND", "asd", "=", "qwe")
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
+
+func TestOffsetLimit(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSelect("t.column_one", "columnOne").
+		SetSQLSelect("t.column_two", "columnTwo").
+		SetSQLSelect("t.column_three", "columnThree").
+		SetSQLSelect("t.column_no_alias", "").
+		SQLFrom("table", "t").
+		SQLPageLimit(0, 10)
+
 	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }

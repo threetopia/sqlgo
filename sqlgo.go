@@ -135,6 +135,11 @@ func (sg *SQLGo) SetSQLLimit(limit int) *SQLGo {
 	return sg
 }
 
+func (sg *SQLGo) SQLPageLimit(page int, limit int) *SQLGo {
+	sg.sqlOffsetLimit.SQLPageLimit(page-1, limit)
+	return sg
+}
+
 func (sg *SQLGo) BuildSQL() string {
 	sql := ""
 	if sqlInsert := sg.sqlInsert.SetParamsCount(sg.GetParamsCount()).BuildSQL(); sqlInsert != "" {
