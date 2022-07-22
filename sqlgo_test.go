@@ -46,7 +46,7 @@ func TestOffsetLimit(t *testing.T) {
 		SetSQLSelect("t.column_three", "columnThree").
 		SetSQLSelect("t.column_no_alias", "").
 		SQLFrom("table", "t").
-		SQLPageLimit(0, 10)
+		SQLPageLimit(1, 8)
 
 	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
