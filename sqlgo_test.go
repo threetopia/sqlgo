@@ -39,6 +39,19 @@ func TestDelete(t *testing.T) {
 	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
 }
 
+func TestWhereINClause(t *testing.T) {
+	sql := NewSQLGo().
+		SQLDelete("table").
+		SetSQLWhere("AND", "asd", "IN", []string{"satu", "satu", "dua", "tiga", "empat", "satu"})
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
+
+func TestWhereAnyClause(t *testing.T) {
+	sql := NewSQLGo().
+		SQLDelete("table").
+		SetSQLWhere("AND", "asd", "ANY", []string{"satu", "satu", "dua", "tiga", "empat", "satu"})
+	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())
+}
 func TestOffsetLimit(t *testing.T) {
 	sql := NewSQLGo().
 		SetSQLSelect("t.column_one", "columnOne").

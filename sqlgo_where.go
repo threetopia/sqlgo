@@ -120,6 +120,19 @@ func (sw *SQLGoWhere) GetParamsCount() int {
 }
 
 func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere, sql string, operator string, v SqlGoWhereValue, vType []V) string {
+	loadedValue := make(map[V]bool)
+	cleanVType := make([]V, 0)
+	for _, vAny := range vType {
+		if _, ok := loadedValue[vAny]; !ok {
+			loadedValue[vAny] = true
+		} else {
+			continue
+		}
+
+		cleanVType = append(cleanVType, vAny)
+	}
+	vType = cleanVType
+
 	if operator == "IN" {
 		sql = fmt.Sprintf("%s%s%s(", sql, v.whereColumn, v.operator)
 		for iIn, vIn := range vType {
