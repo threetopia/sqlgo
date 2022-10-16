@@ -30,7 +30,6 @@ func NewSQLGo() *SQLGo {
 	}
 }
 
-//
 func (sg *SQLGo) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]SQLGoInsertValue) *SQLGo {
 	sg.sqlInsert.SQLInsert(table, columns, values...)
 	return sg

@@ -15,7 +15,10 @@ func TestGenericQueryPrependWay(t *testing.T) {
 			SetSelect("t.column_three", "columnThree"),
 			SetSelect("t.column_no_alias", ""),
 		).
-		SQLFrom("table", "t")
+		SQLFrom("table", "t").
+		SQLWhere(
+			SetWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
+		)
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("reuslt must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
 	}

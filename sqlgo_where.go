@@ -6,10 +6,12 @@ import (
 )
 
 var specialOperator = map[string]string{
-	"ANY":   "= ANY ",
-	"IN":    " IN ",
-	"LIKE":  " LIKE ",
-	"ILIKE": " ILIKE ",
+	"ANY":       "= ANY ",
+	"ILIKE ANY": " ILIKE ANY ",
+	"LIKE ANY":  " LIKE ANY ",
+	"IN":        " IN ",
+	"LIKE":      " LIKE ",
+	"ILIKE":     " ILIKE ",
 }
 
 type SQLGoWhere struct {
