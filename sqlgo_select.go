@@ -19,7 +19,7 @@ func NewSQLGoSelect() *SQLGoSelect {
 	return &SQLGoSelect{}
 }
 
-func SetSelect(value interface{}, alias string) SqlGoSelectValue {
+func SetSQLSelect(value interface{}, alias string) SqlGoSelectValue {
 	return SqlGoSelectValue{
 		value: value,
 		alias: alias,

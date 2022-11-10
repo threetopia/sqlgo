@@ -22,11 +22,11 @@ func NewSQLGoJoin() *SQLGoJoin {
 	return &SQLGoJoin{}
 }
 
-func SetJoinWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
-	return SetWhereNotParam(whereType, whereColumn, operator, value)
+func SetSQLJoinWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
+	return SetSQLWhereNotParam(whereType, whereColumn, operator, value)
 }
 
-func SetJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) SQLGoJoinValue {
+func SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) SQLGoJoinValue {
 	return SQLGoJoinValue{
 		joinType: joinType,
 		table:    table,

@@ -46,7 +46,7 @@ func (sg *SQLGo) SetSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLInsertValue(values ...SQLGoInsertValue) *SQLGo {
-	sg.sqlInsert.setSQLInsertValue(SetInsertValues(values...))
+	sg.sqlInsert.setSQLInsertValue(SetSQLInsertValues(values...))
 	return sg
 }
 
@@ -76,7 +76,7 @@ func (sg *SQLGo) SQLSelect(values ...SqlGoSelectValue) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLSelect(value interface{}, alias string) *SQLGo {
-	sg.SQLSelect(SetSelect(value, alias))
+	sg.SQLSelect(SetSQLSelect(value, alias))
 	return sg
 }
 
@@ -95,7 +95,7 @@ func (sg *SQLGo) SQLJoin(values ...SQLGoJoinValue) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) *SQLGo {
-	sg.SQLJoin(SetJoin(joinType, table, alias, sqlWhere...))
+	sg.SQLJoin(SetSQLJoin(joinType, table, alias, sqlWhere...))
 	return sg
 }
 
@@ -105,7 +105,7 @@ func (sg *SQLGo) SQLWhere(values ...SqlGoWhereValue) *SQLGo {
 }
 
 func (sg *SQLGo) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) *SQLGo {
-	sg.SQLWhere(SetWhere(whereType, whereColumn, operator, value))
+	sg.SQLWhere(SetSQLWhere(whereType, whereColumn, operator, value))
 	return sg
 }
 

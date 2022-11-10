@@ -18,11 +18,11 @@ func NewSQLGOInsert() *SQLGOInsert {
 	return &SQLGOInsert{}
 }
 
-func SetInsertColumns(columns ...SQLGoInsertColumn) []SQLGoInsertColumn {
+func SetSQLInsertColumns(columns ...SQLGoInsertColumn) []SQLGoInsertColumn {
 	return columns
 }
 
-func SetInsertValues(values ...SQLGoInsertValue) []SQLGoInsertValue {
+func SetSQLInsertValues(values ...SQLGoInsertValue) []SQLGoInsertValue {
 	return values
 }
 

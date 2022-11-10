@@ -10,15 +10,15 @@ const genericQuery string = "SELECT t.column_one AS columnOne, t.column_two AS c
 func TestGenericQueryPrependWay(t *testing.T) {
 	sql := NewSQLGo().
 		SQLSelect(
-			SetSelect("t.column_one", "columnOne"),
-			SetSelect("t.column_two", "columnTwo"),
-			SetSelect("t.column_three", "columnThree"),
-			SetSelect("t.column_no_alias", ""),
+			SetSQLSelect("t.column_one", "columnOne"),
+			SetSQLSelect("t.column_two", "columnTwo"),
+			SetSQLSelect("t.column_three", "columnThree"),
+			SetSQLSelect("t.column_no_alias", ""),
 		).
 		SQLFrom("table", "t").
-		SQLJoin(SetJoin("INNER", "join_table", "jt", SetJoinWhere("AND", "jt.id", "=", "t.id"))).
+		SQLJoin(SetSQLJoin("INNER", "join_table", "jt", SetSQLJoinWhere("AND", "jt.id", "=", "t.id"))).
 		SQLWhere(
-			SetWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
+			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
@@ -32,7 +32,7 @@ func TestGenericQueryPipeline(t *testing.T) {
 		SetSQLSelect("t.column_three", "columnThree").
 		SetSQLSelect("t.column_no_alias", "").
 		SQLFrom("table", "t").
-		SetSQLJoin("INNER", "join_table", "jt", SetJoinWhere("AND", "jt.id", "=", "t.id")).
+		SetSQLJoin("INNER", "join_table", "jt", SetSQLJoinWhere("AND", "jt.id", "=", "t.id")).
 		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("reuslt must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
@@ -88,7 +88,7 @@ func TestALL(t *testing.T) {
 	sql.SetSQLSelect("u.created_at", "created_at")
 	sql.SetSQLSelect("u.updated_at", "updated_at")
 	sql.SetSQLFrom(`"user"`, "u")
-	sql.SetSQLJoin("INNER", "search_meta_view", "smv", SetJoinWhere("AND", "smv.id", "=", "u.id"))
+	sql.SetSQLJoin("INNER", "search_meta_view", "smv", SetSQLJoinWhere("AND", "smv.id", "=", "u.id"))
 
 	sql.SetSQLWhere("AND", "u.id", "ANY", []string{"asd"})
 	fmt.Println(sql.BuildSQL(), sql.GetParams(), sql.GetParamsCount())

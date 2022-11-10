@@ -14,25 +14,29 @@ var specialOperator = map[string]string{
 	"ILIKE":     " ILIKE ",
 }
 
-type SQLGoWhere struct {
-	values     []SqlGoWhereValue
-	params     []interface{}
-	paramCount int
-}
+type (
+	SQLGoWhere struct {
+		values     []SqlGoWhereValue
+		params     []interface{}
+		paramCount int
+	}
 
-type SqlGoWhereValue struct {
-	whereType   string
-	whereColumn string
-	operator    string
-	value       interface{}
-	isParam     bool
-}
+	SqlGoWhereValue struct {
+		whereType   string
+		whereColumn string
+		operator    string
+		value       interface{}
+		isParam     bool
+	}
+
+	SqlGoWhereValueSlice []SqlGoWhereValue
+)
 
 func NewSQLGoWhere() *SQLGoWhere {
 	return &SQLGoWhere{}
 }
 
-func SetWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
+func SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
 	return SqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
@@ -42,7 +46,7 @@ func SetWhere(whereType string, whereColumn string, operator string, value inter
 	}
 }
 
-func SetWhereNotParam(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
+func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
 	return SqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
