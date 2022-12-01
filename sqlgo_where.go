@@ -2,7 +2,10 @@ package sqlgo
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
+
+	"github.com/lib/pq"
 )
 
 var specialOperator = map[string]string{
@@ -159,7 +162,12 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 		if !v.isParam {
 			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
 		} else {
-			sw.SetParams(vType)
+			if reflect.TypeOf(vType).Kind() == reflect.Slice {
+				fmt.Println("=============================================================", reflect.TypeOf(vType).Kind(), reflect.TypeOf(vType).Kind() == reflect.Slice)
+				sw.SetParams(pq.Array(vType))
+			} else {
+				sw.SetParams(vType)
+			}
 			sw.SetParamsCount(sw.GetParamsCount() + 1)
 			sql = fmt.Sprintf("%s%s%s($%d)", sql, v.whereColumn, v.operator, sw.GetParamsCount())
 		}
