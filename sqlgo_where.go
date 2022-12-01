@@ -163,7 +163,6 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
 		} else {
 			if reflect.TypeOf(vType).Kind() == reflect.Slice {
-				fmt.Println("=============================================================", reflect.TypeOf(vType).Kind(), reflect.TypeOf(vType).Kind() == reflect.Slice)
 				sw.SetParams(pq.Array(vType))
 			} else {
 				sw.SetParams(vType)
