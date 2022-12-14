@@ -24,7 +24,7 @@ func TestGenericQueryPrependWay(t *testing.T) {
 			),
 		).
 		SQLFrom("table", "t").
-		SQLJoin(SetSQLJoin("INNER", "join_table", "jt", SetSQLJoinWhere("AND", "jt.id", "=", "t.id"))).
+		SQLJoin(SetSQLJoin("INNER", "join_table", "jt", SetSQLJoinWhere("AND", "jt.id", "=", "t.id"), SetSQLWhere("AND", "jt.id", "ILIKE ANY", []string{"coba_satu", "coba_dua"}))).
 		SQLWhere(
 			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1}),
 			SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2}),
