@@ -3,7 +3,7 @@ package sqlgo
 import "fmt"
 
 type SQLGoInsert interface {
-	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnList, values ...sqlGoInsertValueSlice) SQLGoInsert
+	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert
 	SetSQLInsert(table sqlGoTable) SQLGoInsert
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGoInsert
 	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGoInsert
@@ -15,22 +15,22 @@ type SQLGoInsert interface {
 type (
 	sqlGoInsert struct {
 		table          sqlGoTable
-		columns        []sqlGoInsertColumn
+		columns        sqlGoInsertColumnSlice
 		values         []sqlGoInsertValueSlice
 		sqlGoParameter SQLGoParameter
 	}
 
-	sqlGoInsertColumn     string
-	sqlGoInsertColumnList []sqlGoInsertColumn
-	sqlGoInsertValue      interface{}
-	sqlGoInsertValueSlice []sqlGoInsertValue
+	sqlGoInsertColumn      string
+	sqlGoInsertColumnSlice []sqlGoInsertColumn
+	sqlGoInsertValue       interface{}
+	sqlGoInsertValueSlice  []sqlGoInsertValue
 )
 
 func NewSQLGoInsert() SQLGoInsert {
 	return &sqlGoInsert{}
 }
 
-func SetSQLInsertColumn(columns ...sqlGoInsertColumn) sqlGoInsertColumnList {
+func SetSQLInsertColumn(columns ...sqlGoInsertColumn) sqlGoInsertColumnSlice {
 	return columns
 }
 
@@ -38,19 +38,14 @@ func SetSQLInsertValue(values ...sqlGoInsertValue) sqlGoInsertValueSlice {
 	return values
 }
 
-func (s *sqlGoInsert) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnList, values ...sqlGoInsertValueSlice) SQLGoInsert {
-	s.setSQLInsertTable(table)
+func (s *sqlGoInsert) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert {
+	s.table = table
 	s.SetSQLInsertColumn(columns...)
 	s.SetSQLInsertValue(values...)
 	return s
 }
 
 func (s *sqlGoInsert) SetSQLInsert(table sqlGoTable) SQLGoInsert {
-	s.setSQLInsertTable(table)
-	return s
-}
-
-func (s *sqlGoInsert) setSQLInsertTable(table sqlGoTable) SQLGoInsert {
 	s.table = table
 	return s
 }

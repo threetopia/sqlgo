@@ -20,10 +20,15 @@ type SQLGo interface {
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
 
-	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnList, values ...sqlGoInsertValueSlice) SQLGo
+	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGo
 	SetSQLInsert(table sqlGoTable) SQLGo
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
 	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo
+
+	SQLValues(alias sqlGoAlias, columns sqlGoValuesColumnSlice, values ...sqlGoValuesValueSlice) SQLGo
+	SetSQLValues(alias sqlGoAlias) SQLGo
+	SetSQLValuesColumn(columns ...sqlGoValuesColumn) SQLGo
+	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
 
@@ -40,6 +45,7 @@ type (
 	sqlGo struct {
 		sqlGoSelect    SQLGoSelect
 		sqlGoInsert    SQLGoInsert
+		sqlGoValues    SQLGoValues
 		sqlGoFrom      SQLGoFrom
 		sqlGoJoin      SQLGoJoin
 		sqlGoWhere     SQLGoWhere
@@ -56,6 +62,7 @@ func NewSQLGo() SQLGo {
 	return &sqlGo{
 		sqlGoSelect:    NewSQLGoSelect(),
 		sqlGoInsert:    NewSQLGoInsert(),
+		sqlGoValues:    NewSQLGoValues(),
 		sqlGoFrom:      NewSQLGoFrom(),
 		sqlGoJoin:      NewSQLGoJoin(),
 		sqlGoWhere:     NewSQLGoWhere(),
@@ -82,7 +89,7 @@ func (s *sqlGo) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnList, values ...sqlGoInsertValueSlice) SQLGo {
+func (s *sqlGo) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGo {
 	s.sqlGoInsert.SQLInsert(table, columns, values...)
 	return s
 }
@@ -99,6 +106,26 @@ func (s *sqlGo) SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo {
 
 func (s *sqlGo) SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo {
 	s.sqlGoInsert.SetSQLInsertValue(values...)
+	return s
+}
+
+func (s *sqlGo) SQLValues(alias sqlGoAlias, columns sqlGoValuesColumnSlice, values ...sqlGoValuesValueSlice) SQLGo {
+	s.sqlGoValues.SQLValues(alias, columns, values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLValues(alias sqlGoAlias) SQLGo {
+	s.sqlGoValues.SetSQLValues(alias)
+	return s
+}
+
+func (s *sqlGo) SetSQLValuesColumn(columns ...sqlGoValuesColumn) SQLGo {
+	s.sqlGoValues.SetSQLValuesColumn(columns...)
+	return s
+}
+
+func (s *sqlGo) SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo {
+	s.sqlGoValues.SetSQLValuesValue(values...)
 	return s
 }
 
@@ -136,6 +163,10 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoInsert.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoInsert.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoInsert.GetSQLGoParameter())
+
+	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoValues.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
 
 	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoFrom.BuildSQL())

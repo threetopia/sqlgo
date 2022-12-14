@@ -64,13 +64,31 @@ const genericQuery string = "SELECT t.column_one AS columnOne, t.column_two AS c
 // 	}
 // }
 
-func TestInsert(t *testing.T) {
+// func TestInsert(t *testing.T) {
+// 	sql := NewSQLGo().
+// 		SQLInsert("table",
+// 			SetSQLInsertColumn("col1", "col2", "col3"),
+// 			SetSQLInsertValue("val1-1", "val1-2", "val1-3"),
+// 			SetSQLInsertValue("val2-1", "val2-2", "val2-3"),
+// 		)
+// 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
+// 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
+// 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
+// 	}
+// }
+
+func TestValues(t *testing.T) {
 	sql := NewSQLGo().
-		SQLInsert("table",
-			SetSQLInsertColumn("col1", "col2", "col3"),
-			SetSQLInsertValue("val1-1", "val1-2", "val1-3"),
-			SetSQLInsertValue("val2-1", "val2-2", "val2-3"),
-		)
+		SQLSelect(
+			SetSQLSelect("col1", "col1"),
+			SetSQLSelect("col2", "col2"),
+			SetSQLSelect("col3", "col3"),
+		).
+		SQLFrom(NewSQLGo().SQLValues("alias",
+			SetSQLValuesColumn("col1", "col2", "col3"),
+			SetSQLValuesValue("val1-1", "val1-2", "val1-3"),
+			SetSQLValuesValue("val2-1", "val2-2", "val2-3"),
+		), "")
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
