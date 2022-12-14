@@ -3,11 +3,11 @@ package sqlgo
 import "fmt"
 
 type SQLGoSelect interface {
-	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
-	SQLGoMandatory
-
 	SQLSelect(values ...sqlGoSelectValue) SQLGoSelect
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
+	SQLGoMandatory
 }
 
 type (
@@ -35,15 +35,6 @@ func SetSQLSelect(value interface{}, alias sqlGoAlias) sqlGoSelectValue {
 	}
 }
 
-func (s *sqlGoSelect) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect {
-	s.sqlGoParameter = sqlGoParameter
-	return s
-}
-
-func (s *sqlGoSelect) GetSQLGoParameter() SQLGoParameter {
-	return s.sqlGoParameter
-}
-
 func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
 	s.values = append(s.values, values...)
 	return s
@@ -52,6 +43,15 @@ func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
 func (s *sqlGoSelect) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect {
 	s.values = append(s.values, SetSQLSelect(value, alias))
 	return s
+}
+
+func (s *sqlGoSelect) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect {
+	s.sqlGoParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoSelect) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
 }
 
 func (s *sqlGoSelect) BuildSQL() string {

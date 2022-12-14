@@ -6,11 +6,11 @@ import (
 )
 
 type SQLGoJoin interface {
-	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin
-	SQLGoMandatory
-
 	SQLJoin(values ...sqlGoJoinValue) SQLGoJoin
 	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin
+	SQLGoMandatory
 }
 
 type (
@@ -49,6 +49,11 @@ func (s *sqlGoJoin) SQLJoin(values ...sqlGoJoinValue) SQLGoJoin {
 	return s
 }
 
+func (s *sqlGoJoin) SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin {
+	s.values = append(s.values, SetSQLJoin(joinType, table, alias, sqlWhere...))
+	return s
+}
+
 func (s *sqlGoJoin) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -56,11 +61,6 @@ func (s *sqlGoJoin) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin {
 
 func (s *sqlGoJoin) GetSQLGoParameter() SQLGoParameter {
 	return s.sqlGoParameter
-}
-
-func (s *sqlGoJoin) SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin {
-	s.values = append(s.values, SetSQLJoin(joinType, table, alias, sqlWhere...))
-	return s
 }
 
 func (s *sqlGoJoin) BuildSQL() string {

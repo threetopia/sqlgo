@@ -20,6 +20,11 @@ type SQLGo interface {
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
 
+	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnList, values ...sqlGoInsertValueSlice) SQLGo
+	SetSQLInsert(table sqlGoTable) SQLGo
+	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
+	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo
+
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
 
 	SQLJoin(values ...sqlGoJoinValue) SQLGo
@@ -34,6 +39,7 @@ type SQLGo interface {
 type (
 	sqlGo struct {
 		sqlGoSelect    SQLGoSelect
+		sqlGoInsert    SQLGoInsert
 		sqlGoFrom      SQLGoFrom
 		sqlGoJoin      SQLGoJoin
 		sqlGoWhere     SQLGoWhere
@@ -49,6 +55,7 @@ type (
 func NewSQLGo() SQLGo {
 	return &sqlGo{
 		sqlGoSelect:    NewSQLGoSelect(),
+		sqlGoInsert:    NewSQLGoInsert(),
 		sqlGoFrom:      NewSQLGoFrom(),
 		sqlGoJoin:      NewSQLGoJoin(),
 		sqlGoWhere:     NewSQLGoWhere(),
@@ -72,6 +79,26 @@ func (s *sqlGo) SQLSelect(values ...sqlGoSelectValue) SQLGo {
 
 func (s *sqlGo) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo {
 	s.sqlGoSelect.SetSQLSelect(value, alias)
+	return s
+}
+
+func (s *sqlGo) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnList, values ...sqlGoInsertValueSlice) SQLGo {
+	s.sqlGoInsert.SQLInsert(table, columns, values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLInsert(table sqlGoTable) SQLGo {
+	s.sqlGoInsert.SetSQLInsert(table)
+	return s
+}
+
+func (s *sqlGo) SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo {
+	s.sqlGoInsert.SetSQLInsertColumn(columns...)
+	return s
+}
+
+func (s *sqlGo) SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo {
+	s.sqlGoInsert.SetSQLInsertValue(values...)
 	return s
 }
 
@@ -105,6 +132,10 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoSelect.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoSelect.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoParameter.GetSQLGoParameter())
+
+	s.sqlGoInsert.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoInsert.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoInsert.GetSQLGoParameter())
 
 	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoFrom.BuildSQL())

@@ -3,10 +3,10 @@ package sqlgo
 import "fmt"
 
 type SQLGoFrom interface {
+	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
+
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
 	SQLGoMandatory
-
-	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
 }
 
 type sqlGoFrom struct {
@@ -21,6 +21,12 @@ func NewSQLGoFrom() SQLGoFrom {
 	}
 }
 
+func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom {
+	s.table = table
+	s.alias = alias
+	return s
+}
+
 func (s *sqlGoFrom) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -28,12 +34,6 @@ func (s *sqlGoFrom) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom {
 
 func (s *sqlGoFrom) GetSQLGoParameter() SQLGoParameter {
 	return s.sqlGoParameter
-}
-
-func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom {
-	s.table = table
-	s.alias = alias
-	return s
 }
 
 func (s *sqlGoFrom) BuildSQL() string {

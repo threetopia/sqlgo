@@ -9,11 +9,11 @@ import (
 )
 
 type SQLGoWhere interface {
-	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
-	SQLGoMandatory
-
 	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
+	SQLGoMandatory
 }
 
 type (
@@ -66,15 +66,6 @@ func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, 
 	}
 }
 
-func (s *sqlGoWhere) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere {
-	s.sqlGOParameter = sqlGoParameter
-	return s
-}
-
-func (s *sqlGoWhere) GetSQLGoParameter() SQLGoParameter {
-	return s.sqlGOParameter
-}
-
 func (s *sqlGoWhere) SQLWhere(values ...sqlGoWhereValue) SQLGoWhere {
 	s.values = append(s.values, values...)
 	return s
@@ -83,6 +74,15 @@ func (s *sqlGoWhere) SQLWhere(values ...sqlGoWhereValue) SQLGoWhere {
 func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere {
 	s.values = append(s.values, SetSQLWhere(whereType, whereColumn, operator, value))
 	return s
+}
+
+func (s *sqlGoWhere) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere {
+	s.sqlGOParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoWhere) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGOParameter
 }
 
 func (s *sqlGoWhere) BuildSQL() string {
