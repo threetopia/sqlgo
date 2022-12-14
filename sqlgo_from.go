@@ -4,6 +4,8 @@ import "fmt"
 
 type SQLGoFrom interface {
 	SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGoFrom
+	SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
+	SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGoFrom
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
 	SQLGoMandatory
@@ -31,6 +33,12 @@ func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGo
 	s.table = table
 	s.alias = alias
 	s.SetSQLFromColumn(columns...)
+	return s
+}
+
+func (s *sqlGoFrom) SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom {
+	s.table = table
+	s.alias = alias
 	return s
 }
 

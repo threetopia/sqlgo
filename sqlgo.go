@@ -29,6 +29,8 @@ type SQLGo interface {
 	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGo
+	SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
+	SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGo
 
 	SQLJoin(values ...sqlGoJoinValue) SQLGo
 	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGo
@@ -119,6 +121,16 @@ func (s *sqlGo) SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo {
 
 func (s *sqlGo) SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGo {
 	s.sqlGoFrom.SQLFrom(table, alias, columns...)
+	return s
+}
+
+func (s *sqlGo) SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo {
+	s.sqlGoFrom.SetSQLFrom(table, alias)
+	return s
+}
+
+func (s *sqlGo) SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGo {
+	s.sqlGoFrom.SetSQLFromColumn(columns...)
 	return s
 }
 

@@ -87,9 +87,10 @@ func TestValues(t *testing.T) {
 		SQLFrom(NewSQLGo().SQLValues(
 			SetSQLValuesValue("val1-1", "val1-2", "val1-3"),
 			SetSQLValuesValue("val2-1", "val2-2", "val2-3"),
-		), "test")
+			SetSQLValuesValue("val1-1", "val1-2", "val1-3"),
+		), "test", "col1", "col2", "col3")
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
-		t.Errorf("result must be (%s) BuildSQL give = %s", genericQuery, sqlStr)
+		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
 	}
 }
