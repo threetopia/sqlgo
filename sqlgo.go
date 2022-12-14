@@ -2,7 +2,7 @@ package sqlgo
 
 import "fmt"
 
-type SQLGoMandatoryMethod interface {
+type SQLGoMandatory interface {
 	BuildSQL() string
 }
 
@@ -12,15 +12,19 @@ type SQLGo interface {
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
 	SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGo
 
-	SQLGoMandatoryMethod
+	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
+
+	SQLGoMandatory
 }
 
 type (
 	sqlGo struct {
 		sqlGoSelect    SQLGoSelect
+		sqlGoFrom      SQLGoFrom
 		sqlGoParameter SQLGoParameter
 	}
 
+	sqlGoTable interface{}
 	sqlGoAlias string
 	sqlGoValue interface{}
 )
@@ -28,6 +32,7 @@ type (
 func NewSQLGo() SQLGo {
 	return &sqlGo{
 		sqlGoSelect:    NewSQLGoSelect(),
+		sqlGoFrom:      NewSQLGoFrom(),
 		sqlGoParameter: NewSQLGoParameter(),
 	}
 }
@@ -47,8 +52,14 @@ func (s *sqlGo) SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGo {
 	return s
 }
 
+func (s *sqlGo) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo {
+	s.sqlGoFrom.SQLFrom(table, alias)
+	return s
+}
+
 func (s *sqlGo) BuildSQL() string {
 	sql := ""
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoSelect.BuildSQL())
+	sql = fmt.Sprintf("%s %s", sql, s.sqlGoFrom.BuildSQL())
 	return sql
 }

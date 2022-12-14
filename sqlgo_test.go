@@ -11,8 +11,8 @@ func TestGenericQueryPrependWay(t *testing.T) {
 			SetSQLSelect("t.column_two", "columnTwo"),
 			SetSQLSelect("t.column_three", "columnThree"),
 			SetSQLSelect("t.column_no_alias", ""),
-			SetSQLSelect("t.sub_query", NewSQLGo().SetSQLSelect("sub_query_key", "sub_query_value")),
-		)
+			SetSQLSelect("sq", NewSQLGo().SQLFrom("sub_table", "sq").SetSQLSelect("sub_query_key", "sub_query_value")),
+		).SQLFrom("table", "t")
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Logf("sqlStr: %s", sqlStr)
 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
