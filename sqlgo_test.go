@@ -16,20 +16,21 @@ func TestGenericQueryPrependWay(t *testing.T) {
 					SetSQLSelect("sub_query_key", "sub_query_value"),
 				).SQLFrom("sub_table", "t").
 					SQLWhere(
-						SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
-						SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2, 3, 4}),
-						SetSQLWhere("AND", "t.column_three", "=", 1234),
-						SetSQLWhere("AND", "t.column_three", "=", "abc"),
+						SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1}),
+						SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2}),
+						SetSQLWhere("AND", "t.column_three", "=", 3),
+						SetSQLWhere("AND", "t.column_four", "=", "empat"),
 					), "sq",
 			),
 		).
 		SQLFrom("table", "t").
 		SQLWhere(
-			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
-			SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2, 3, 4}),
-			SetSQLWhere("AND", "t.column_three", "=", 1231),
-			SetSQLWhere("AND", "t.column_three", "=", "abc"),
-			SetSQLWhere("AND", "t.column_three", "=", "abcd"),
+			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1}),
+			SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2}),
+			SetSQLWhere("AND", "t.column_five", "=", "lima"),
+			SetSQLWhere("AND", "t.column_six", "=", 6),
+			SetSQLWhere("AND", "t.column_seven", "=", 1234567),
+			SetSQLWhere("AND", "t.column_four", "=", "empat"),
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
