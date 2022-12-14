@@ -4,11 +4,9 @@ import "fmt"
 
 type SQLGoFrom interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
-	GetSQLGoParameter() SQLGoParameter
+	SQLGoMandatory
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
-
-	SQLGoMandatory
 }
 
 type sqlGoFrom struct {

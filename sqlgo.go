@@ -9,6 +9,7 @@ const (
 )
 
 type SQLGoMandatory interface {
+	GetSQLGoParameter() SQLGoParameter
 	BuildSQL() string
 }
 

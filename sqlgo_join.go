@@ -7,12 +7,10 @@ import (
 
 type SQLGoJoin interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin
-	GetSQLGoParameter() SQLGoParameter
+	SQLGoMandatory
 
 	SQLJoin(values ...sqlGoJoinValue) SQLGoJoin
 	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin
-
-	SQLGoMandatory
 }
 
 type (

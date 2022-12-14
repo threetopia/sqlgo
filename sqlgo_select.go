@@ -4,12 +4,10 @@ import "fmt"
 
 type SQLGoSelect interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
-	GetSQLGoParameter() SQLGoParameter
+	SQLGoMandatory
 
 	SQLSelect(values ...sqlGoSelectValue) SQLGoSelect
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect
-
-	SQLGoMandatory
 }
 
 type (

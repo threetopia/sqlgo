@@ -10,12 +10,10 @@ import (
 
 type SQLGoWhere interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
-	GetSQLGoParameter() SQLGoParameter
+	SQLGoMandatory
 
 	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere
-
-	SQLGoMandatory
 }
 
 type (
