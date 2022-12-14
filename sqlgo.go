@@ -14,6 +14,9 @@ type SQLGo interface {
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
 
+	SQLWhere(values ...sqlGoWhereValue) SQLGo
+	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
+
 	SQLGoMandatory
 }
 
@@ -21,6 +24,7 @@ type (
 	sqlGo struct {
 		sqlGoSelect    SQLGoSelect
 		sqlGoFrom      SQLGoFrom
+		sqlGoWhere     SQLGoWhere
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -33,6 +37,7 @@ func NewSQLGo() SQLGo {
 	return &sqlGo{
 		sqlGoSelect:    NewSQLGoSelect(),
 		sqlGoFrom:      NewSQLGoFrom(),
+		sqlGoWhere:     NewSQLGoWhere(),
 		sqlGoParameter: NewSQLGoParameter(),
 	}
 }
@@ -57,9 +62,20 @@ func (s *sqlGo) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo {
 	return s
 }
 
+func (s *sqlGo) SQLWhere(values ...sqlGoWhereValue) SQLGo {
+	s.sqlGoWhere.SQLWhere(values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo {
+	s.sqlGoWhere.SetSQLWhere(whereType, whereColumn, operator, value)
+	return s
+}
+
 func (s *sqlGo) BuildSQL() string {
 	sql := ""
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoSelect.BuildSQL())
 	sql = fmt.Sprintf("%s %s", sql, s.sqlGoFrom.BuildSQL())
+	sql = fmt.Sprintf("%s %s", sql, s.sqlGoWhere.BuildSQL())
 	return sql
 }
