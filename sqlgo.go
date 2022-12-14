@@ -25,12 +25,10 @@ type SQLGo interface {
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
 	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo
 
-	SQLValues(alias sqlGoAlias, columns sqlGoValuesColumnSlice, values ...sqlGoValuesValueSlice) SQLGo
-	SetSQLValues(alias sqlGoAlias) SQLGo
-	SetSQLValuesColumn(columns ...sqlGoValuesColumn) SQLGo
+	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo
 
-	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
+	SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGo
 
 	SQLJoin(values ...sqlGoJoinValue) SQLGo
 	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGo
@@ -109,18 +107,8 @@ func (s *sqlGo) SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SQLValues(alias sqlGoAlias, columns sqlGoValuesColumnSlice, values ...sqlGoValuesValueSlice) SQLGo {
-	s.sqlGoValues.SQLValues(alias, columns, values...)
-	return s
-}
-
-func (s *sqlGo) SetSQLValues(alias sqlGoAlias) SQLGo {
-	s.sqlGoValues.SetSQLValues(alias)
-	return s
-}
-
-func (s *sqlGo) SetSQLValuesColumn(columns ...sqlGoValuesColumn) SQLGo {
-	s.sqlGoValues.SetSQLValuesColumn(columns...)
+func (s *sqlGo) SQLValues(values ...sqlGoValuesValueSlice) SQLGo {
+	s.sqlGoValues.SQLValues(values...)
 	return s
 }
 
@@ -129,8 +117,8 @@ func (s *sqlGo) SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo {
-	s.sqlGoFrom.SQLFrom(table, alias)
+func (s *sqlGo) SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGo {
+	s.sqlGoFrom.SQLFrom(table, alias, columns...)
 	return s
 }
 
@@ -164,10 +152,6 @@ func (s *sqlGo) BuildSQL() string {
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoInsert.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoInsert.GetSQLGoParameter())
 
-	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoValues.BuildSQL())
-	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
-
 	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoFrom.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoFrom.GetSQLGoParameter())
@@ -179,5 +163,10 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoWhere.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoWhere.GetSQLGoParameter())
+
+	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoValues.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
+
 	return sql
 }

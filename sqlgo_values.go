@@ -3,9 +3,7 @@ package sqlgo
 import "fmt"
 
 type SQLGoValues interface {
-	SQLValues(alias sqlGoAlias, columns sqlGoValuesColumnSlice, values ...sqlGoValuesValueSlice) SQLGoValues
-	SetSQLValues(alias sqlGoAlias) SQLGoValues
-	SetSQLValuesColumn(columns ...sqlGoValuesColumn) SQLGoValues
+	SQLValues(values ...sqlGoValuesValueSlice) SQLGoValues
 	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGoValues
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoValues
@@ -14,44 +12,24 @@ type SQLGoValues interface {
 
 type (
 	sqlGoValues struct {
-		alias          sqlGoAlias
-		columns        sqlGoValuesColumnSlice
 		values         []sqlGoValuesValueSlice
 		sqlGoParameter SQLGoParameter
 	}
 
-	sqlGoValuesColumn      string
-	sqlGoValuesColumnSlice []sqlGoValuesColumn
-	sqlGoValuesValue       interface{}
-	sqlGoValuesValueSlice  []sqlGoValuesValue
+	sqlGoValuesValue      interface{}
+	sqlGoValuesValueSlice []sqlGoValuesValue
 )
 
 func NewSQLGoValues() SQLGoValues {
 	return &sqlGoValues{}
 }
 
-func SetSQLValuesColumn(columns ...sqlGoValuesColumn) sqlGoValuesColumnSlice {
-	return columns
-}
-
 func SetSQLValuesValue(values ...sqlGoValuesValue) sqlGoValuesValueSlice {
 	return values
 }
 
-func (s *sqlGoValues) SQLValues(alias sqlGoAlias, columns sqlGoValuesColumnSlice, values ...sqlGoValuesValueSlice) SQLGoValues {
-	s.alias = alias
-	s.SetSQLValuesColumn(columns...)
+func (s *sqlGoValues) SQLValues(values ...sqlGoValuesValueSlice) SQLGoValues {
 	s.SetSQLValuesValue(values...)
-	return s
-}
-
-func (s *sqlGoValues) SetSQLValues(alias sqlGoAlias) SQLGoValues {
-	s.alias = alias
-	return s
-}
-
-func (s *sqlGoValues) SetSQLValuesColumn(columns ...sqlGoValuesColumn) SQLGoValues {
-	s.columns = append(s.columns, columns...)
 	return s
 }
 
@@ -71,7 +49,7 @@ func (s *sqlGoValues) GetSQLGoParameter() SQLGoParameter {
 
 func (s *sqlGoValues) BuildSQL() string {
 	var sql string
-	if len(s.columns) < 1 {
+	if len(s.values) < 1 {
 		return sql
 	}
 
@@ -91,13 +69,5 @@ func (s *sqlGoValues) BuildSQL() string {
 		}
 		sql = fmt.Sprintf("%s)", sql)
 	}
-	sql = fmt.Sprintf("%s) %s(", sql, s.alias)
-	for i, v := range s.columns {
-		if i > 0 {
-			sql = fmt.Sprintf("%s, ", sql)
-		}
-		sql = fmt.Sprintf("%s%s", sql, v)
-	}
-
 	return sql
 }
