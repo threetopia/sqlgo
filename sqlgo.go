@@ -21,6 +21,9 @@ type SQLGo interface {
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
 
+	SQLJoin(values ...sqlGoJoinValue) SQLGo
+	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGo
+
 	SQLWhere(values ...sqlGoWhereValue) SQLGo
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
 
@@ -31,6 +34,7 @@ type (
 	sqlGo struct {
 		sqlGoSelect    SQLGoSelect
 		sqlGoFrom      SQLGoFrom
+		sqlGoJoin      SQLGoJoin
 		sqlGoWhere     SQLGoWhere
 		sqlGoParameter SQLGoParameter
 	}
@@ -45,6 +49,7 @@ func NewSQLGo() SQLGo {
 	return &sqlGo{
 		sqlGoSelect:    NewSQLGoSelect(),
 		sqlGoFrom:      NewSQLGoFrom(),
+		sqlGoJoin:      NewSQLGoJoin(),
 		sqlGoWhere:     NewSQLGoWhere(),
 		sqlGoParameter: NewSQLGoParameter(),
 	}
@@ -74,6 +79,16 @@ func (s *sqlGo) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo {
 	return s
 }
 
+func (s *sqlGo) SQLJoin(values ...sqlGoJoinValue) SQLGo {
+	s.sqlGoJoin.SQLJoin(values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGo {
+	s.sqlGoJoin.SetSQLJoin(joinType, table, alias, sqlWhere...)
+	return s
+}
+
 func (s *sqlGo) SQLWhere(values ...sqlGoWhereValue) SQLGo {
 	s.sqlGoWhere.SQLWhere(values...)
 	return s
@@ -91,11 +106,15 @@ func (s *sqlGo) BuildSQL() string {
 	s.SetSQLGoParameter(s.sqlGoParameter.GetSQLGoParameter())
 
 	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s %s", sql, s.sqlGoFrom.BuildSQL())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoFrom.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoFrom.GetSQLGoParameter())
 
+	s.sqlGoJoin.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoJoin.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoJoin.GetSQLGoParameter())
+
 	s.sqlGoWhere.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s %s", sql, s.sqlGoWhere.BuildSQL())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoWhere.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoWhere.GetSQLGoParameter())
 	return sql
 }

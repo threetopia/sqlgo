@@ -39,11 +39,12 @@ func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom {
 }
 
 func (s *sqlGoFrom) BuildSQL() string {
+	var sql string
 	if s.table == nil {
-		return ""
+		return sql
 	}
 
-	sql := "FROM "
+	sql = " FROM "
 	switch vType := s.table.(type) {
 	case SQLGo:
 		sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())

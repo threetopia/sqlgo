@@ -1,8 +1,6 @@
 package sqlgo
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type SQLGoSelect interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
@@ -59,23 +57,26 @@ func (s *sqlGoSelect) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSel
 }
 
 func (s *sqlGoSelect) BuildSQL() string {
-	sql := "SELECT "
-	if len(s.values) > 0 {
-		for i, value := range s.values {
-			if i > 0 {
-				sql = fmt.Sprintf("%s, ", sql)
-			}
-			switch vType := value.value.(type) {
-			case SQLGo:
-				vType.SetSQLGoParameter(s.GetSQLGoParameter())
-				sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
-				s.SetSQLGoParameter(vType.GetSQLGoParameter())
-			default:
-				sql = fmt.Sprintf("%s%s", sql, vType)
-			}
-			if value.alias != "" {
-				sql = fmt.Sprintf("%s AS %s", sql, value.alias)
-			}
+	var sql string
+	if len(s.values) < 1 {
+		return sql
+	}
+
+	sql = "SELECT "
+	for i, value := range s.values {
+		if i > 0 {
+			sql = fmt.Sprintf("%s, ", sql)
+		}
+		switch vType := value.value.(type) {
+		case SQLGo:
+			vType.SetSQLGoParameter(s.GetSQLGoParameter())
+			sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
+			s.SetSQLGoParameter(vType.GetSQLGoParameter())
+		default:
+			sql = fmt.Sprintf("%s%s", sql, vType)
+		}
+		if value.alias != "" {
+			sql = fmt.Sprintf("%s AS %s", sql, value.alias)
 		}
 	}
 	return sql

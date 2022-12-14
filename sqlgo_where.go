@@ -88,11 +88,12 @@ func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator 
 }
 
 func (s *sqlGoWhere) BuildSQL() string {
+	var sql string
 	if len(s.values) < 1 {
-		return ""
+		return sql
 	}
 
-	sql := "WHERE "
+	sql = " WHERE "
 	for i, v := range s.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(v.whereType))
