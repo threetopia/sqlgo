@@ -8,9 +8,10 @@ type SQLGoMandatory interface {
 
 type SQLGo interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo
+	GetSQLGoParameter() SQLGoParameter
 
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
-	SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGo
+	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
 
@@ -47,13 +48,17 @@ func (s *sqlGo) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo {
 	return s
 }
 
+func (s *sqlGo) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
+}
+
 func (s *sqlGo) SQLSelect(values ...sqlGoSelectValue) SQLGo {
 	s.sqlGoSelect.SQLSelect(values...)
 	return s
 }
 
-func (s *sqlGo) SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGo {
-	s.sqlGoSelect.SetSQLSelect(alias, value)
+func (s *sqlGo) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo {
+	s.sqlGoSelect.SetSQLSelect(value, alias)
 	return s
 }
 
@@ -74,8 +79,16 @@ func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator strin
 
 func (s *sqlGo) BuildSQL() string {
 	sql := ""
+	s.sqlGoSelect.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoSelect.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoParameter.GetSQLGoParameter())
+
+	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s %s", sql, s.sqlGoFrom.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoFrom.GetSQLGoParameter())
+
+	s.sqlGoWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s %s", sql, s.sqlGoWhere.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoWhere.GetSQLGoParameter())
 	return sql
 }

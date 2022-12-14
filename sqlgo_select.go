@@ -2,20 +2,20 @@ package sqlgo
 
 import (
 	"fmt"
-	"reflect"
 )
 
 type SQLGoSelect interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
+	GetSQLGoParameter() SQLGoParameter
 	SQLSelect(values ...sqlGoSelectValue) SQLGoSelect
-	SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGoSelect
+	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect
 	SQLGoMandatory
 }
 
 type (
 	sqlGoSelect struct {
-		parameter SQLGoParameter
-		values    []sqlGoSelectValue
+		values         []sqlGoSelectValue
+		sqlGoParameter SQLGoParameter
 	}
 
 	sqlGoSelectValue struct {
@@ -26,11 +26,11 @@ type (
 
 func NewSQLGoSelect() SQLGoSelect {
 	return &sqlGoSelect{
-		parameter: NewSQLGoParameter(),
+		sqlGoParameter: NewSQLGoParameter(),
 	}
 }
 
-func SetSQLSelect(alias sqlGoAlias, value interface{}) sqlGoSelectValue {
+func SetSQLSelect(value interface{}, alias sqlGoAlias) sqlGoSelectValue {
 	return sqlGoSelectValue{
 		alias: alias,
 		value: value,
@@ -38,8 +38,12 @@ func SetSQLSelect(alias sqlGoAlias, value interface{}) sqlGoSelectValue {
 }
 
 func (s *sqlGoSelect) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect {
-	s.parameter = sqlGoParameter
+	s.sqlGoParameter = sqlGoParameter
 	return s
+}
+
+func (s *sqlGoSelect) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
 }
 
 func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
@@ -47,8 +51,8 @@ func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
 	return s
 }
 
-func (s *sqlGoSelect) SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGoSelect {
-	s.values = append(s.values, SetSQLSelect(alias, value))
+func (s *sqlGoSelect) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelect(value, alias))
 	return s
 }
 
@@ -59,12 +63,11 @@ func (s *sqlGoSelect) BuildSQL() string {
 			if i > 0 {
 				sql = fmt.Sprintf("%s, ", sql)
 			}
-			xType := reflect.TypeOf(value.value)
-			fmt.Println("=================================================", xType)
 			switch vType := value.value.(type) {
 			case SQLGo:
-				// vType.SetSQLGoParameter()
+				vType.SetSQLGoParameter(s.GetSQLGoParameter())
 				sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
+				s.SetSQLGoParameter(vType.GetSQLGoParameter())
 			default:
 				sql = fmt.Sprintf("%s%s", sql, vType)
 			}
