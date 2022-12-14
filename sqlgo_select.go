@@ -7,8 +7,10 @@ import (
 type SQLGoSelect interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
 	GetSQLGoParameter() SQLGoParameter
+
 	SQLSelect(values ...sqlGoSelectValue) SQLGoSelect
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect
+
 	SQLGoMandatory
 }
 

@@ -5,7 +5,9 @@ import "fmt"
 type SQLGoFrom interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
 	GetSQLGoParameter() SQLGoParameter
+
 	SQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
+
 	SQLGoMandatory
 }
 

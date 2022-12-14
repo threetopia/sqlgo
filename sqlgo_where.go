@@ -11,8 +11,10 @@ import (
 type SQLGoWhere interface {
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
 	GetSQLGoParameter() SQLGoParameter
+
 	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere
+
 	SQLGoMandatory
 }
 
@@ -119,7 +121,7 @@ func (s *sqlGoWhere) BuildSQL() string {
 				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, vType)
 			} else {
 				s.sqlGOParameter.SetSQLParameter(vType)
-				sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, s.GetSQLGoParameter().GetSQLParameterCount(vType))
+				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType))
 			}
 		}
 	}
@@ -152,7 +154,7 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](s SQLGoWhere, s
 				sql = fmt.Sprintf("%s%x", sql, vIn)
 			} else {
 				s.GetSQLGoParameter().SetSQLParameter(vIn)
-				sql = fmt.Sprintf("%s$%d", sql, s.GetSQLGoParameter().GetSQLParameterCount(vIn))
+				sql = fmt.Sprintf("%s%s", sql, s.GetSQLGoParameter().GetSQLParameterSign(vIn))
 			}
 		}
 		sql = fmt.Sprintf("%s)", sql)
@@ -160,15 +162,15 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](s SQLGoWhere, s
 		if !v.isParam {
 			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
 		} else {
-			var paramCount int
+			var paramSign string
 			if reflect.TypeOf(vType).Kind() == reflect.Slice {
 				s.GetSQLGoParameter().SetSQLParameter(pq.Array(vType))
-				paramCount = s.GetSQLGoParameter().GetSQLParameterCount(pq.Array(vType))
+				paramSign = s.GetSQLGoParameter().GetSQLParameterSign(pq.Array(vType))
 			} else {
 				s.GetSQLGoParameter().SetSQLParameter(vType)
-				paramCount = s.GetSQLGoParameter().GetSQLParameterCount(vType)
+				paramSign = s.GetSQLGoParameter().GetSQLParameterSign(vType)
 			}
-			sql = fmt.Sprintf("%s%s%s($%d)", sql, v.whereColumn, v.operator, paramCount)
+			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, paramSign)
 		}
 	}
 	return sql

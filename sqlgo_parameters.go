@@ -4,13 +4,15 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 )
 
 type SQLGoParameter interface {
 	GetSQLGoParameter() SQLGoParameter
 	SetSQLParameter(value interface{}) SQLGoParameter
 	GetSQLParameterCount(value interface{}) int
-	GetSQLParameter() []interface{}
+	GetSQLParameterSign(value interface{}) string
+	GetSQLParameterList() []interface{}
 }
 
 type sqlGoParameter struct {
@@ -51,7 +53,11 @@ func (s *sqlGoParameter) GetSQLParameterCount(value interface{}) int {
 	return -1
 }
 
-func (s *sqlGoParameter) GetSQLParameter() []interface{} {
+func (s *sqlGoParameter) GetSQLParameterSign(value interface{}) string {
+	return fmt.Sprintf("$%d", s.GetSQLParameterCount(value))
+}
+
+func (s *sqlGoParameter) GetSQLParameterList() []interface{} {
 	return s.parameterList
 }
 

@@ -33,7 +33,7 @@ func TestGenericQueryPrependWay(t *testing.T) {
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameter())
+		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
 	}
 }
 

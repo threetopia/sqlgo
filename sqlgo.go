@@ -2,6 +2,12 @@ package sqlgo
 
 import "fmt"
 
+const (
+	Dialect           sqlGoDialect = "dialect"
+	MySQLDialect      sqlGoDialect = "mysql-" + Dialect
+	PostgreSQLDialect sqlGoDialect = "postgresql-" + Dialect
+)
+
 type SQLGoMandatory interface {
 	BuildSQL() string
 }
@@ -29,9 +35,10 @@ type (
 		sqlGoParameter SQLGoParameter
 	}
 
-	sqlGoTable interface{}
-	sqlGoAlias string
-	sqlGoValue interface{}
+	sqlGoTable   interface{}
+	sqlGoAlias   string
+	sqlGoValue   interface{}
+	sqlGoDialect string
 )
 
 func NewSQLGo() SQLGo {
