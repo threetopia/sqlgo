@@ -2,82 +2,76 @@ package sqlgo
 
 import (
 	"fmt"
+	"reflect"
 )
 
-type SQLGoSelect struct {
-	values     []SqlGoSelectValue
-	params     []interface{}
-	paramCount int
+type SQLGoSelect interface {
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
+	SQLSelect(values ...sqlGoSelectValue) SQLGoSelect
+	SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGoSelect
+	SQLGoMandatoryMethod
 }
 
-type SqlGoSelectValue struct {
-	alias string
-	value interface{}
+type (
+	sqlGoSelect struct {
+		parameter SQLGoParameter
+		values    []sqlGoSelectValue
+	}
+
+	sqlGoSelectValue struct {
+		alias sqlGoAlias
+		value sqlGoValue
+	}
+)
+
+func NewSQLGoSelect() SQLGoSelect {
+	return &sqlGoSelect{
+		parameter: NewSQLGoParameter(),
+	}
 }
 
-func NewSQLGoSelect() *SQLGoSelect {
-	return &SQLGoSelect{}
-}
-
-func SetSQLSelect(value interface{}, alias string) SqlGoSelectValue {
-	return SqlGoSelectValue{
-		value: value,
+func SetSQLSelect(alias sqlGoAlias, value interface{}) sqlGoSelectValue {
+	return sqlGoSelectValue{
 		alias: alias,
+		value: value,
 	}
 }
 
-func (ss *SQLGoSelect) SQLSelect(values ...SqlGoSelectValue) *SQLGoSelect {
-	ss.values = append(ss.values, values...)
-	return ss
+func (s *sqlGoSelect) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect {
+	s.parameter = sqlGoParameter
+	return s
 }
 
-func (ss *SQLGoSelect) BuildSQL() string {
-	if len(ss.values) < 1 {
-		return ""
-	}
+func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
+	s.values = append(s.values, values...)
+	return s
+}
 
+func (s *sqlGoSelect) SetSQLSelect(alias sqlGoAlias, value interface{}) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelect(alias, value))
+	return s
+}
+
+func (s *sqlGoSelect) BuildSQL() string {
 	sql := "SELECT "
-	for i, v := range ss.values {
-		if i > 0 {
-			sql = fmt.Sprintf("%s, ", sql)
-		}
-
-		switch vType := v.value.(type) {
-		// case string:
-		// 	sql = fmt.Sprintf("%s%s", sql, vType)
-		case *SQLGo:
-			sql = fmt.Sprintf("%s(%s)", sql, vType.SetParamsCount(ss.GetParamsCount()).BuildSQL())
-			ss.SetParams(vType.GetParams()...)
-			ss.SetParamsCount(vType.GetParamsCount())
-		default:
-			sql = fmt.Sprintf("%s%s", sql, vType)
-		}
-
-		if v.alias != "" {
-			sql = fmt.Sprintf("%s AS %s", sql, v.alias)
+	if len(s.values) > 0 {
+		for i, value := range s.values {
+			if i > 0 {
+				sql = fmt.Sprintf("%s, ", sql)
+			}
+			xType := reflect.TypeOf(value.value)
+			fmt.Println("=================================================", xType)
+			switch vType := value.value.(type) {
+			case SQLGo:
+				// vType.SetSQLGoParameter()
+				sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
+			default:
+				sql = fmt.Sprintf("%s%s", sql, vType)
+			}
+			if value.alias != "" {
+				sql = fmt.Sprintf("%s AS %s", sql, value.alias)
+			}
 		}
 	}
-
 	return sql
-}
-
-func (ss *SQLGoSelect) SetParams(params ...interface{}) *SQLGoSelect {
-	if len(params) < 1 {
-		return ss
-	}
-	ss.params = append(ss.params, params...)
-	return ss
-}
-
-func (ss *SQLGoSelect) GetParams() []interface{} {
-	return ss.params
-}
-
-func (ss *SQLGoSelect) SetParamsCount(paramsCount int) *SQLGoSelect {
-	ss.paramCount = paramsCount
-	return ss
-}
-
-func (ss *SQLGoSelect) GetParamsCount() int {
-	return ss.paramCount
 }
