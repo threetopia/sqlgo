@@ -4,7 +4,7 @@ import "fmt"
 
 type SQLGoValues interface {
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGoValues
-	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGoValues
+	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGoValues
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoValues
 	SQLGoMandatory
@@ -29,11 +29,11 @@ func SetSQLValuesValue(values ...sqlGoValuesValue) sqlGoValuesValueSlice {
 }
 
 func (s *sqlGoValues) SQLValues(values ...sqlGoValuesValueSlice) SQLGoValues {
-	s.SetSQLValuesValue(values...)
+	s.SetSQLValues(values...)
 	return s
 }
 
-func (s *sqlGoValues) SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGoValues {
+func (s *sqlGoValues) SetSQLValues(values ...sqlGoValuesValueSlice) SQLGoValues {
 	s.values = append(s.values, values...)
 	return s
 }

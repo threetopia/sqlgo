@@ -4,7 +4,7 @@ import "fmt"
 
 type SQLGoUpdate interface {
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate
-	SetSQLUpdateTable(table sqlGoTable) SQLGoUpdate
+	SetSQLUpdate(table sqlGoTable) SQLGoUpdate
 	SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGoUpdate
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
@@ -38,12 +38,12 @@ func SetSQLUpdate(column string, value interface{}) sqlGoUpdateValue {
 }
 
 func (s *sqlGoUpdate) SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate {
-	s.SetSQLUpdateTable(table)
+	s.SetSQLUpdate(table)
 	s.SetSQLUpdateValue(values...)
 	return s
 }
 
-func (s *sqlGoUpdate) SetSQLUpdateTable(table sqlGoTable) SQLGoUpdate {
+func (s *sqlGoUpdate) SetSQLUpdate(table sqlGoTable) SQLGoUpdate {
 	s.table = table
 	return s
 }

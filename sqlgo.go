@@ -23,13 +23,14 @@ type SQLGo interface {
 	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo
 
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo
-	SetSQLUpdateTable(table sqlGoTable) SQLGo
+	SetSQLUpdate(table sqlGoTable) SQLGo
 	SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGo
 
 	SQLDelete(table sqlGoTable) SQLGo
+	SetSQLDelete(table sqlGoTable) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
-	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo
+	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo
 
 	SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGo
 	SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGo
@@ -122,8 +123,8 @@ func (s *sqlGo) SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLUpdateTable(table sqlGoTable) SQLGo {
-	s.sqlGoUpdate.SetSQLUpdateTable(table)
+func (s *sqlGo) SetSQLUpdate(table sqlGoTable) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdate(table)
 	return s
 }
 
@@ -137,13 +138,18 @@ func (s *sqlGo) SQLDelete(table sqlGoTable) SQLGo {
 	return s
 }
 
+func (s *sqlGo) SetSQLDelete(table sqlGoTable) SQLGo {
+	s.sqlGoDelete.SQLDelete(table)
+	return s
+}
+
 func (s *sqlGo) SQLValues(values ...sqlGoValuesValueSlice) SQLGo {
 	s.sqlGoValues.SQLValues(values...)
 	return s
 }
 
-func (s *sqlGo) SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo {
-	s.sqlGoValues.SetSQLValuesValue(values...)
+func (s *sqlGo) SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo {
+	s.sqlGoValues.SetSQLValues(values...)
 	return s
 }
 

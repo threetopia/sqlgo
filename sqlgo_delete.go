@@ -4,6 +4,7 @@ import "fmt"
 
 type SQLGoDelete interface {
 	SQLDelete(table sqlGoTable) SQLGoDelete
+	SetSQLDelete(table sqlGoTable) SQLGoDelete
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoDelete
 	SQLGoMandatory
@@ -19,6 +20,11 @@ func NewSQLGoDelete() SQLGoDelete {
 }
 
 func (s *sqlGoDelete) SQLDelete(table sqlGoTable) SQLGoDelete {
+	s.table = table
+	return s
+}
+
+func (s *sqlGoDelete) SetSQLDelete(table sqlGoTable) SQLGoDelete {
 	s.table = table
 	return s
 }
