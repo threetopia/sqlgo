@@ -38,6 +38,6 @@ func (s *sqlGoDelete) BuildSQL() string {
 		return sql
 	}
 
-	sql = fmt.Sprintf(" DELETE FROM %s", s.table)
+	sql = fmt.Sprintf("DELETE FROM %s", s.table)
 	return sql
 }

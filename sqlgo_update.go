@@ -68,7 +68,7 @@ func (s *sqlGoUpdate) BuildSQL() string {
 		return sql
 	}
 
-	sql = fmt.Sprintf(" UPDATE %s SET ", s.table)
+	sql = fmt.Sprintf("UPDATE %s SET ", s.table)
 	for i, v := range s.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
