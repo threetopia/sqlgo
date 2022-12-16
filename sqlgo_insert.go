@@ -70,10 +70,12 @@ func (s *sqlGoInsert) GetSQLGoParameter() SQLGoParameter {
 }
 
 func (s *sqlGoInsert) BuildSQL() string {
+	var sql string
 	if len(s.columns) < 1 {
-		return ""
+		return sql
 	}
-	sql := fmt.Sprintf("INSERT INTO %s (", s.table)
+	
+	sql = fmt.Sprintf("INSERT INTO %s (", s.table)
 	for i, v := range s.columns {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)

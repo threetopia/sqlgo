@@ -14,9 +14,6 @@ type SQLGoMandatory interface {
 }
 
 type SQLGo interface {
-	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo
-	GetSQLGoParameter() SQLGoParameter
-
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
 
@@ -24,6 +21,12 @@ type SQLGo interface {
 	SetSQLInsert(table sqlGoTable) SQLGo
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
 	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo
+
+	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo
+	SetSQLUpdateTable(table sqlGoTable) SQLGo
+	SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGo
+
+	SQLDelete(table sqlGoTable) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValuesValue(values ...sqlGoValuesValueSlice) SQLGo
@@ -38,6 +41,7 @@ type SQLGo interface {
 	SQLWhere(values ...sqlGoWhereValue) SQLGo
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
 
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo
 	SQLGoMandatory
 }
 
@@ -45,6 +49,8 @@ type (
 	sqlGo struct {
 		sqlGoSelect    SQLGoSelect
 		sqlGoInsert    SQLGoInsert
+		sqlGoUpdate    SQLGoUpdate
+		sqlGoDelete    SQLGoDelete
 		sqlGoValues    SQLGoValues
 		sqlGoFrom      SQLGoFrom
 		sqlGoJoin      SQLGoJoin
@@ -62,6 +68,8 @@ func NewSQLGo() SQLGo {
 	return &sqlGo{
 		sqlGoSelect:    NewSQLGoSelect(),
 		sqlGoInsert:    NewSQLGoInsert(),
+		sqlGoUpdate:    NewSQLGoUpdate(),
+		sqlGoDelete:    NewSQLGoDelete(),
 		sqlGoValues:    NewSQLGoValues(),
 		sqlGoFrom:      NewSQLGoFrom(),
 		sqlGoJoin:      NewSQLGoJoin(),
@@ -106,6 +114,26 @@ func (s *sqlGo) SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo {
 
 func (s *sqlGo) SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo {
 	s.sqlGoInsert.SetSQLInsertValue(values...)
+	return s
+}
+
+func (s *sqlGo) SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo {
+	s.sqlGoUpdate.SQLUpdate(table, values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLUpdateTable(table sqlGoTable) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdateTable(table)
+	return s
+}
+
+func (s *sqlGo) SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdateValue(values...)
+	return s
+}
+
+func (s *sqlGo) SQLDelete(table sqlGoTable) SQLGo {
+	s.sqlGoDelete.SQLDelete(table)
 	return s
 }
 
@@ -163,6 +191,14 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoInsert.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoInsert.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoInsert.GetSQLGoParameter())
+
+	s.sqlGoUpdate.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoUpdate.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoUpdate.GetSQLGoParameter())
+
+	s.sqlGoDelete.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoDelete.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoDelete.GetSQLGoParameter())
 
 	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoFrom.BuildSQL())

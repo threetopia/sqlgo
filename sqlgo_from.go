@@ -30,8 +30,7 @@ func NewSQLGoFrom() SQLGoFrom {
 }
 
 func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGoFrom {
-	s.table = table
-	s.alias = alias
+	s.SetSQLFrom(table, alias)
 	s.SetSQLFromColumn(columns...)
 	return s
 }
@@ -65,7 +64,9 @@ func (s *sqlGoFrom) BuildSQL() string {
 	sql = " FROM "
 	switch vType := s.table.(type) {
 	case SQLGo:
+		vType.SetSQLGoParameter(s.GetSQLGoParameter())
 		sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
+		s.SetSQLGoParameter(vType.GetSQLGoParameter())
 	default:
 		sql = fmt.Sprintf("%s%s", sql, vType)
 	}

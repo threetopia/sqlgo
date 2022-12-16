@@ -69,5 +69,6 @@ func (s *sqlGoValues) BuildSQL() string {
 		}
 		sql = fmt.Sprintf("%s)", sql)
 	}
+
 	return sql
 }
