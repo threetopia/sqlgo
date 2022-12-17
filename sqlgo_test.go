@@ -1,8 +1,11 @@
 package sqlgo
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
-const genericQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias, (SELECT sub_query_key AS sub_query_value FROM sub_table AS t WHERE t.column_one ILIKE ANY ($1) AND t.column_two ILIKE ANY ($2) AND t.column_three=$3) AS sq FROM table AS t WHERE t.column_one ILIKE ANY ($1) AND t.column_two ILIKE ANY ($2) AND t.column_three=$4"
+const genericQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM table AS t INNER JOIN join_table1 AS jt1 ON jt1.id=t.id INNER JOIN join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1)"
 
 func TestGenericQueryPrependWay(t *testing.T) {
 	sql := NewSQLGo().
@@ -11,110 +14,88 @@ func TestGenericQueryPrependWay(t *testing.T) {
 			SetSQLSelect("t.column_two", "columnTwo"),
 			SetSQLSelect("t.column_three", "columnThree"),
 			SetSQLSelect("t.column_no_alias", ""),
-			SetSQLSelect(
-				NewSQLGo().SQLSelect(
-					SetSQLSelect("sub_query_key", "sub_query_value"),
-				).SQLFrom("sub_table", "t").
-					SQLWhere(
-						SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1}),
-						SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2}),
-						SetSQLWhere("AND", "t.column_three", "=", 3),
-						SetSQLWhere("AND", "t.column_four", "=", "empat"),
-					), "sq",
-			),
 		).
 		SQLFrom("table", "t").
-		SQLJoin(SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id"), SetSQLWhere("AND", "jt1.id", "ILIKE ANY", []string{"coba_satu", "coba_dua"}))).
-		SQLJoin(SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id"), SetSQLWhere("AND", "jt2.id", "ILIKE ANY", []string{"coba_satu", "coba_dua"}))).
+		SQLJoin(
+			SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")),
+			SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")),
+		).
 		SQLWhere(
-			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1}),
-			SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2}),
-			SetSQLWhere("AND", "t.column_five", "=", "lima"),
-			SetSQLWhere("AND", "t.column_six", "=", 6),
-			SetSQLWhere("AND", "t.column_seven", "=", 1234567),
-			SetSQLWhere("AND", "t.column_four", "=", "empat"),
+			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
 	}
 }
 
-// func TestGenericQueryPipeline(t *testing.T) {
-// 	sql := NewSQLGo().
-// 		SetSQLSelect("t.column_one", "columnOne").
-// 		SetSQLSelect("t.column_two", "columnTwo").
-// 		SetSQLSelect("t.column_three", "columnThree").
-// 		SetSQLSelect("t.column_no_alias", "").
-// 		SetSQLSelect(
-// 			NewSQLGo().
-// 				SetSQLSelect("sub_query_key", "sub_query_value").
-// 				SQLFrom("sub_table", "t").
-// 				SQLWhere(
-// 					SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
-// 					SetSQLWhere("AND", "t.column_two", "ILIKE ANY", []int{1, 2, 3, 4}),
-// 					SetSQLWhere("AND", "t.column_three", "=", 1234),
-// 				), "sq",
-// 		).
-// 		SQLFrom("table", "t").
-// 		// SetSQLJoin("INNER", "join_table", "jt", SetSQLJoinWhere("AND", "jt.id", "=", "t.id")).
-// 		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
-// 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
-// 		t.Logf("sqlStr: %s", sqlStr)
-// 		t.Errorf("reuslt must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-// 	}
-// }
+func TestGenericQueryPipeline(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSelect("t.column_one", "columnOne").
+		SetSQLSelect("t.column_two", "columnTwo").
+		SetSQLSelect("t.column_three", "columnThree").
+		SetSQLSelect("t.column_no_alias", "").
+		SQLFrom("table", "t").
+		SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
+		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")).
+		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
+	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
+		t.Errorf("reuslt must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
+	}
+}
 
-// func TestInsert(t *testing.T) {
-// 	sql := NewSQLGo().
-// 		SQLInsert("table",
-// 			SetSQLInsertColumn("col1", "col2", "col3"),
-// 			SetSQLInsertValue("val1-1", "val1-2", "val1-3"),
-// 			SetSQLInsertValue("val2-1", "val2-2", "val2-3"),
-// 		)
-// 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
-// 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-// 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
-// 	}
-// }
+const deleteQuery string = "DELETE FROM table WHERE column_one=$1"
 
-// func TestUpdate(t *testing.T) {
-// 	sql := NewSQLGo().
-// 		SQLUpdate("table",
-// 			SetSQLUpdate("col1", "satu"),
-// 			SetSQLUpdate("col2", "dua"),
-// 		)
-// 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
-// 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-// 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
-// 	}
-// }
+func TestDelete(t *testing.T) {
+	sql := NewSQLGo().
+		SQLDelete("table").
+		SetSQLWhere("AND", "column_one", "=", "value_one")
+	if sqlStr := sql.BuildSQL(); sqlStr != deleteQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", deleteQuery, sqlStr)
+	}
+}
 
-// func TestDelete(t *testing.T) {
-// 	sql := NewSQLGo().
-// 		SQLDelete("table").SQLWhere(SetSQLWhere("AND", "col1", "=", "val1"))
+func TestWhereINClause(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSelect("t.col1", "col1").
+		SetSQLSelect("t.col2", "col2").
+		SetSQLFrom("table", "t").
+		SetSQLWhere("AND", "asd", "IN", []string{"satu", "satu", "dua", "tiga", "empat", "satu"})
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+}
 
-// 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
-// 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-// 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
-// 	}
-// }
+func TestWhereAnyClause(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSelect("t.col1", "col1").
+		SetSQLSelect("t.col2", "col2").
+		SetSQLFrom("table", "t").
+		SetSQLWhere("AND", "asd", "ANY", []string{"satu", "satu", "dua", "tiga", "empat", "satu"})
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+}
 
-// func TestValues(t *testing.T) {
-// 	sql := NewSQLGo().
-// 		SQLSelect(
-// 			SetSQLSelect("col1", "col1"),
-// 			SetSQLSelect("col2", "col2"),
-// 			SetSQLSelect("col3", "col3"),
-// 		).
-// 		SQLFrom(NewSQLGo().SQLValues(
-// 			SetSQLValuesValue("val1-1", "val1-2", "val1-3"),
-// 			SetSQLValuesValue("val2-1", "val2-2", "val2-3"),
-// 			SetSQLValuesValue("val1-1", "val1-2", "val1-3"),
-// 		), "test", "col1", "col2", "col3")
+func TestOffsetLimit(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSelect("t.column_one", "columnOne").
+		SetSQLSelect("t.column_two", "columnTwo").
+		SetSQLSelect("t.column_three", "columnThree").
+		SetSQLSelect("t.column_no_alias", "").
+		SQLFrom("table", "t").
+		SQLPageLimit(1, 10)
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+}
 
-// 	if sqlStr := sql.BuildSQL(); sqlStr != genericQuery {
-// 		t.Errorf("result must be (%s) BuildSQL give (%s)", genericQuery, sqlStr)
-// 		t.Logf("sqlParam: %s", sql.GetSQLGoParameter().GetSQLParameterList())
-// 	}
-// }
+func TestALL(t *testing.T) {
+	sql := NewSQLGo()
+	sql.SetSQLSelect("u.id", "id")
+	sql.SetSQLSelect("u.full_name", "full_name")
+	sql.SetSQLSelect("u.id_card", "id_card")
+	sql.SetSQLSelect("u.country_code", "country_code")
+	sql.SetSQLSelect("u.search_meta", "search_meta")
+	sql.SetSQLSelect("u.data_hash", "data_hash")
+	sql.SetSQLSelect("u.deleted", "deleted")
+	sql.SetSQLSelect("u.created_at", "created_at")
+	sql.SetSQLSelect("u.updated_at", "updated_at")
+	sql.SetSQLFrom(`"user"`, "u")
+	sql.SetSQLJoin("INNER", "search_meta_view", "smv", SetSQLJoinWhere("AND", "smv.id", "=", "u.id"))
+	sql.SetSQLWhere("AND", "u.id", "ANY", []string{"asd"})
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+}

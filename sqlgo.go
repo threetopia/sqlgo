@@ -42,21 +42,28 @@ type SQLGo interface {
 	SQLWhere(values ...sqlGoWhereValue) SQLGo
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
 
+	SQLOffsetLimit(offset int, limit int) SQLGo
+	SetSQLLimit(limit int) SQLGo
+	SetSQLOffset(offset int) SQLGo
+	SQLPageLimit(page int, limit int) SQLGo
+	SetSQLPage(page int) SQLGo
+
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo
 	SQLGoMandatory
 }
 
 type (
 	sqlGo struct {
-		sqlGoSelect    SQLGoSelect
-		sqlGoInsert    SQLGoInsert
-		sqlGoUpdate    SQLGoUpdate
-		sqlGoDelete    SQLGoDelete
-		sqlGoValues    SQLGoValues
-		sqlGoFrom      SQLGoFrom
-		sqlGoJoin      SQLGoJoin
-		sqlGoWhere     SQLGoWhere
-		sqlGoParameter SQLGoParameter
+		sqlGoSelect      SQLGoSelect
+		sqlGoInsert      SQLGoInsert
+		sqlGoUpdate      SQLGoUpdate
+		sqlGoDelete      SQLGoDelete
+		sqlGoValues      SQLGoValues
+		sqlGoFrom        SQLGoFrom
+		sqlGoJoin        SQLGoJoin
+		sqlGoWhere       SQLGoWhere
+		sqlGoOffsetLimit SQLGoOffsetLimit
+		sqlGoParameter   SQLGoParameter
 	}
 
 	sqlGoTable   interface{}
@@ -67,15 +74,16 @@ type (
 
 func NewSQLGo() SQLGo {
 	return &sqlGo{
-		sqlGoSelect:    NewSQLGoSelect(),
-		sqlGoInsert:    NewSQLGoInsert(),
-		sqlGoUpdate:    NewSQLGoUpdate(),
-		sqlGoDelete:    NewSQLGoDelete(),
-		sqlGoValues:    NewSQLGoValues(),
-		sqlGoFrom:      NewSQLGoFrom(),
-		sqlGoJoin:      NewSQLGoJoin(),
-		sqlGoWhere:     NewSQLGoWhere(),
-		sqlGoParameter: NewSQLGoParameter(),
+		sqlGoSelect:      NewSQLGoSelect(),
+		sqlGoInsert:      NewSQLGoInsert(),
+		sqlGoUpdate:      NewSQLGoUpdate(),
+		sqlGoDelete:      NewSQLGoDelete(),
+		sqlGoValues:      NewSQLGoValues(),
+		sqlGoFrom:        NewSQLGoFrom(),
+		sqlGoJoin:        NewSQLGoJoin(),
+		sqlGoWhere:       NewSQLGoWhere(),
+		sqlGoOffsetLimit: NewSQLGoOffsetLimit(),
+		sqlGoParameter:   NewSQLGoParameter(),
 	}
 }
 
@@ -188,6 +196,31 @@ func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator strin
 	return s
 }
 
+func (s *sqlGo) SQLOffsetLimit(offset int, limit int) SQLGo {
+	s.sqlGoOffsetLimit.SQLOffsetLimit(offset, limit)
+	return s
+}
+
+func (s *sqlGo) SetSQLLimit(limit int) SQLGo {
+	s.sqlGoOffsetLimit.SetSQLLimit(limit)
+	return s
+}
+
+func (s *sqlGo) SetSQLOffset(offset int) SQLGo {
+	s.sqlGoOffsetLimit.SetSQLOffset(offset)
+	return s
+}
+
+func (s *sqlGo) SQLPageLimit(page int, limit int) SQLGo {
+	s.sqlGoOffsetLimit.SQLPageLimit(page, limit)
+	return s
+}
+
+func (s *sqlGo) SetSQLPage(page int) SQLGo {
+	s.sqlGoOffsetLimit.SetSQLPage(page)
+	return s
+}
+
 func (s *sqlGo) BuildSQL() string {
 	sql := ""
 	s.sqlGoSelect.SetSQLGoParameter(s.GetSQLGoParameter())
@@ -221,6 +254,10 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoValues.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
+
+	s.sqlGoOffsetLimit.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = fmt.Sprintf("%s%s", sql, s.sqlGoOffsetLimit.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoOffsetLimit.GetSQLGoParameter())
 
 	return sql
 }

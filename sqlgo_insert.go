@@ -39,7 +39,7 @@ func SetSQLInsertValue(values ...sqlGoInsertValue) sqlGoInsertValueSlice {
 }
 
 func (s *sqlGoInsert) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert {
-	s.table = table
+	s.SetSQLInsert(table)
 	s.SetSQLInsertColumn(columns...)
 	s.SetSQLInsertValue(values...)
 	return s
@@ -74,7 +74,7 @@ func (s *sqlGoInsert) BuildSQL() string {
 	if len(s.columns) < 1 {
 		return sql
 	}
-	
+
 	sql = fmt.Sprintf("INSERT INTO %s (", s.table)
 	for i, v := range s.columns {
 		if i > 0 {

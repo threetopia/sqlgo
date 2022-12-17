@@ -69,10 +69,8 @@ func (s *sqlGoJoin) BuildSQL() string {
 		return sql
 	}
 
-	for i, v := range s.values {
-		if i > 0 {
-			sql = fmt.Sprintf("%s ", sql)
-		}
+	for _, v := range s.values {
+		sql = fmt.Sprintf("%s ", sql)
 
 		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...)
 		switch vType := v.table.(type) {
@@ -81,7 +79,7 @@ func (s *sqlGoJoin) BuildSQL() string {
 			s.SetSQLGoParameter(vType.GetSQLGoParameter())
 			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
-			sql = fmt.Sprintf("%s %s JOIN (%s) AS %s%s",
+			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s",
 				sql,
 				strings.ToUpper(v.joinType),
 				vType.BuildSQL(),
@@ -91,7 +89,7 @@ func (s *sqlGoJoin) BuildSQL() string {
 		default:
 			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
-			sql = fmt.Sprintf("%s %s JOIN %s AS %s%s",
+			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s",
 				sql,
 				strings.ToUpper(v.joinType),
 				vType,
