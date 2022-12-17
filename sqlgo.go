@@ -20,7 +20,7 @@ type SQLGo interface {
 	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGo
 	SetSQLInsert(table sqlGoTable) SQLGo
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
-	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo
+	SetSQLInsertValue(values ...sqlGoInsertValue) SQLGo
 
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo
 	SetSQLUpdate(table sqlGoTable) SQLGo
@@ -121,7 +121,7 @@ func (s *sqlGo) SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGo {
+func (s *sqlGo) SetSQLInsertValue(values ...sqlGoInsertValue) SQLGo {
 	s.sqlGoInsert.SetSQLInsertValue(values...)
 	return s
 }

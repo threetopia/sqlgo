@@ -6,7 +6,8 @@ type SQLGoInsert interface {
 	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert
 	SetSQLInsert(table sqlGoTable) SQLGoInsert
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGoInsert
-	SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGoInsert
+	SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert
+	SetSQLInsertValueSlice(values ...sqlGoInsertValueSlice) SQLGoInsert
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoInsert
 	SQLGoMandatory
@@ -41,7 +42,7 @@ func SetSQLInsertValue(values ...sqlGoInsertValue) sqlGoInsertValueSlice {
 func (s *sqlGoInsert) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert {
 	s.SetSQLInsert(table)
 	s.SetSQLInsertColumn(columns...)
-	s.SetSQLInsertValue(values...)
+	s.SetSQLInsertValueSlice(values...)
 	return s
 }
 
@@ -55,8 +56,13 @@ func (s *sqlGoInsert) SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGoInse
 	return s
 }
 
-func (s *sqlGoInsert) SetSQLInsertValue(values ...sqlGoInsertValueSlice) SQLGoInsert {
+func (s *sqlGoInsert) SetSQLInsertValueSlice(values ...sqlGoInsertValueSlice) SQLGoInsert {
 	s.values = append(s.values, values...)
+	return s
+}
+
+func (s *sqlGoInsert) SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert {
+	s.values = append(s.values, values)
 	return s
 }
 
