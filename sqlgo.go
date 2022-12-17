@@ -225,7 +225,7 @@ func (s *sqlGo) BuildSQL() string {
 	sql := ""
 	s.sqlGoSelect.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoSelect.BuildSQL())
-	s.SetSQLGoParameter(s.sqlGoParameter.GetSQLGoParameter())
+	s.SetSQLGoParameter(s.sqlGoSelect.GetSQLGoParameter())
 
 	s.sqlGoInsert.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = fmt.Sprintf("%s%s", sql, s.sqlGoInsert.BuildSQL())

@@ -60,7 +60,7 @@ func TestWhereINClause(t *testing.T) {
 		SetSQLSelect("t.col2", "col2").
 		SetSQLFrom("table", "t").
 		SetSQLWhere("AND", "asd", "IN", []string{"satu", "satu", "dua", "tiga", "empat", "satu"})
-	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 func TestWhereAnyClause(t *testing.T) {
@@ -69,7 +69,7 @@ func TestWhereAnyClause(t *testing.T) {
 		SetSQLSelect("t.col2", "col2").
 		SetSQLFrom("table", "t").
 		SetSQLWhere("AND", "asd", "ANY", []string{"satu", "satu", "dua", "tiga", "empat", "satu"})
-	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 func TestOffsetLimit(t *testing.T) {
@@ -80,7 +80,7 @@ func TestOffsetLimit(t *testing.T) {
 		SetSQLSelect("t.column_no_alias", "").
 		SQLFrom("table", "t").
 		SQLPageLimit(1, 10)
-	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 func TestALL(t *testing.T) {
@@ -97,5 +97,5 @@ func TestALL(t *testing.T) {
 	sql.SetSQLFrom(`"user"`, "u")
 	sql.SetSQLJoin("INNER", "search_meta_view", "smv", SetSQLJoinWhere("AND", "smv.id", "=", "u.id"))
 	sql.SetSQLWhere("AND", "u.id", "ANY", []string{"asd"})
-	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameterList())
+	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameter())
 }

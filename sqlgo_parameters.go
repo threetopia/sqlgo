@@ -8,11 +8,10 @@ import (
 )
 
 type SQLGoParameter interface {
-	GetSQLGoParameter() SQLGoParameter
 	SetSQLParameter(value interface{}) SQLGoParameter
 	GetSQLParameterCount(value interface{}) int
 	GetSQLParameterSign(value interface{}) string
-	GetSQLParameterList() []interface{}
+	GetSQLParameter() []interface{}
 }
 
 type sqlGoParameter struct {
@@ -57,7 +56,7 @@ func (s *sqlGoParameter) GetSQLParameterSign(value interface{}) string {
 	return fmt.Sprintf("$%d", s.GetSQLParameterCount(value))
 }
 
-func (s *sqlGoParameter) GetSQLParameterList() []interface{} {
+func (s *sqlGoParameter) GetSQLParameter() []interface{} {
 	return s.parameterList
 }
 
