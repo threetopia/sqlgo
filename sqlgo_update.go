@@ -5,7 +5,8 @@ import "fmt"
 type SQLGoUpdate interface {
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate
 	SetSQLUpdate(table sqlGoTable) SQLGoUpdate
-	SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGoUpdate
+	SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate
+	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
 	SQLGoMandatory
@@ -14,7 +15,7 @@ type SQLGoUpdate interface {
 type (
 	sqlGoUpdate struct {
 		table          sqlGoTable
-		values         []sqlGoUpdateValue
+		values         sqlGoUpdateValueSlice
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -22,6 +23,7 @@ type (
 		column string
 		value  interface{}
 	}
+	sqlGoUpdateValueSlice []sqlGoUpdateValue
 )
 
 func NewSQLGoUpdate() SQLGoUpdate {
@@ -30,7 +32,7 @@ func NewSQLGoUpdate() SQLGoUpdate {
 	}
 }
 
-func SetSQLUpdate(column string, value interface{}) sqlGoUpdateValue {
+func SetSQLUpdateValue(column string, value interface{}) sqlGoUpdateValue {
 	return sqlGoUpdateValue{
 		column: column,
 		value:  value,
@@ -39,7 +41,7 @@ func SetSQLUpdate(column string, value interface{}) sqlGoUpdateValue {
 
 func (s *sqlGoUpdate) SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate {
 	s.SetSQLUpdate(table)
-	s.SetSQLUpdateValue(values...)
+	s.SetSQLUpdateValueSlice(values...)
 	return s
 }
 
@@ -48,8 +50,13 @@ func (s *sqlGoUpdate) SetSQLUpdate(table sqlGoTable) SQLGoUpdate {
 	return s
 }
 
-func (s *sqlGoUpdate) SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGoUpdate {
+func (s *sqlGoUpdate) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate {
 	s.values = append(s.values, values...)
+	return s
+}
+
+func (s *sqlGoUpdate) SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate {
+	s.SetSQLUpdateValueSlice(SetSQLUpdateValue(column, value))
 	return s
 }
 

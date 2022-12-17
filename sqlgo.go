@@ -24,7 +24,8 @@ type SQLGo interface {
 
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo
 	SetSQLUpdate(table sqlGoTable) SQLGo
-	SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGo
+	SetSQLUpdateValue(column string, value interface{}) SQLGo
+	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo
 
 	SQLDelete(table sqlGoTable) SQLGo
 	SetSQLDelete(table sqlGoTable) SQLGo
@@ -136,8 +137,13 @@ func (s *sqlGo) SetSQLUpdate(table sqlGoTable) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLUpdateValue(values ...sqlGoUpdateValue) SQLGo {
-	s.sqlGoUpdate.SetSQLUpdateValue(values...)
+func (s *sqlGo) SetSQLUpdateValue(column string, value interface{}) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdateValue(column, value)
+	return s
+}
+
+func (s *sqlGo) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdateValueSlice(values...)
 	return s
 }
 

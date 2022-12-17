@@ -62,7 +62,7 @@ func (s *sqlGoInsert) SetSQLInsertValueSlice(values ...sqlGoInsertValueSlice) SQ
 }
 
 func (s *sqlGoInsert) SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert {
-	s.values = append(s.values, values)
+	s.SetSQLInsertValueSlice(values)
 	return s
 }
 
