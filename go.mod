@@ -1,4 +1,4 @@
-module gitlab.com/threetopia/sqlgo
+module gitlab.com/threetopia/sqlgo/v2
 
 go 1.18
 
