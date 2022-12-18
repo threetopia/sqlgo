@@ -2,58 +2,87 @@ package sqlgo
 
 import "fmt"
 
-type SQLGOInsert struct {
-	table      string
-	columns    []SQLGoInsertColumn
-	values     [][]SQLGoInsertValue
-	params     []interface{}
-	paramCount int
+type SQLGoInsert interface {
+	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert
+	SetSQLInsert(table sqlGoTable) SQLGoInsert
+	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGoInsert
+	SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert
+	SetSQLInsertValueSlice(values ...sqlGoInsertValueSlice) SQLGoInsert
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoInsert
+	SQLGoMandatory
 }
 
-type SQLGoInsertColumn string
+type (
+	sqlGoInsert struct {
+		table          sqlGoTable
+		columns        sqlGoInsertColumnSlice
+		values         []sqlGoInsertValueSlice
+		sqlGoParameter SQLGoParameter
+	}
 
-type SQLGoInsertValue interface{}
+	sqlGoInsertColumn      string
+	sqlGoInsertColumnSlice []sqlGoInsertColumn
+	sqlGoInsertValue       interface{}
+	sqlGoInsertValueSlice  []sqlGoInsertValue
+)
 
-func NewSQLGOInsert() *SQLGOInsert {
-	return &SQLGOInsert{}
+func NewSQLGoInsert() SQLGoInsert {
+	return &sqlGoInsert{}
 }
 
-func SetSQLInsertColumns(columns ...SQLGoInsertColumn) []SQLGoInsertColumn {
+func SetSQLInsertColumn(columns ...sqlGoInsertColumn) sqlGoInsertColumnSlice {
 	return columns
 }
 
-func SetSQLInsertValues(values ...SQLGoInsertValue) []SQLGoInsertValue {
+func SetSQLInsertValue(values ...sqlGoInsertValue) sqlGoInsertValueSlice {
 	return values
 }
 
-func (si *SQLGOInsert) SQLInsert(table string, columns []SQLGoInsertColumn, values ...[]SQLGoInsertValue) *SQLGOInsert {
-	si.setSQLInsertTable(table)
-	si.setSQLInsertColumn(columns...)
-	si.setSQLInsertValue(values...)
-	return si
+func (s *sqlGoInsert) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert {
+	s.SetSQLInsert(table)
+	s.SetSQLInsertColumn(columns...)
+	s.SetSQLInsertValueSlice(values...)
+	return s
 }
 
-func (si *SQLGOInsert) setSQLInsertTable(table string) *SQLGOInsert {
-	si.table = table
-	return si
+func (s *sqlGoInsert) SetSQLInsert(table sqlGoTable) SQLGoInsert {
+	s.table = table
+	return s
 }
 
-func (si *SQLGOInsert) setSQLInsertColumn(columns ...SQLGoInsertColumn) *SQLGOInsert {
-	si.columns = append(si.columns, columns...)
-	return si
+func (s *sqlGoInsert) SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGoInsert {
+	s.columns = append(s.columns, columns...)
+	return s
 }
 
-func (si *SQLGOInsert) setSQLInsertValue(values ...[]SQLGoInsertValue) *SQLGOInsert {
-	si.values = append(si.values, values...)
-	return si
+func (s *sqlGoInsert) SetSQLInsertValueSlice(values ...sqlGoInsertValueSlice) SQLGoInsert {
+	s.values = append(s.values, values...)
+	return s
 }
 
-func (si *SQLGOInsert) BuildSQL() string {
-	if len(si.columns) < 1 {
-		return ""
+func (s *sqlGoInsert) SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert {
+	s.SetSQLInsertValueSlice(values)
+	return s
+}
+
+func (s *sqlGoInsert) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoInsert {
+	s.sqlGoParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoInsert) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
+}
+
+func (s *sqlGoInsert) BuildSQL() string {
+	var sql string
+	if len(s.columns) < 1 {
+		return sql
 	}
-	sql := fmt.Sprintf("INSERT INTO %s (", si.table)
-	for i, v := range si.columns {
+
+	sql = fmt.Sprintf("INSERT INTO %s (", s.table)
+	for i, v := range s.columns {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
 		}
@@ -62,7 +91,7 @@ func (si *SQLGOInsert) BuildSQL() string {
 
 	sql = fmt.Sprintf("%s)", sql)
 	sql = fmt.Sprintf("%s VALUES ", sql)
-	for iValues, vValues := range si.values {
+	for iValues, vValues := range s.values {
 		if iValues > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
 		}
@@ -72,32 +101,10 @@ func (si *SQLGOInsert) BuildSQL() string {
 			if iValue > 0 {
 				sql = fmt.Sprintf("%s, ", sql)
 			}
-			si.SetParams(vValue)
-			si.SetParamsCount(si.GetParamsCount() + 1)
-			sql = fmt.Sprintf("%s$%d", sql, si.GetParamsCount())
+			s.sqlGoParameter.SetSQLParameter(vValue)
+			sql = fmt.Sprintf("%s%s", sql, s.sqlGoParameter.GetSQLParameterSign(vValue))
 		}
 		sql = fmt.Sprintf("%s)", sql)
 	}
 	return sql
-}
-
-func (si *SQLGOInsert) SetParams(params ...interface{}) *SQLGOInsert {
-	if len(params) < 1 {
-		return si
-	}
-	si.params = append(si.params, params...)
-	return si
-}
-
-func (si *SQLGOInsert) GetParams() []interface{} {
-	return si.params
-}
-
-func (si *SQLGOInsert) SetParamsCount(paramsCount int) *SQLGOInsert {
-	si.paramCount = paramsCount
-	return si
-}
-
-func (si *SQLGOInsert) GetParamsCount() int {
-	return si.paramCount
 }

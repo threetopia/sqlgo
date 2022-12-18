@@ -5,29 +5,38 @@ import (
 	"strings"
 )
 
-type SQLGoJoin struct {
-	values     []SQLGoJoinValue
-	params     []interface{}
-	paramCount int
+type SQLGoJoin interface {
+	SQLJoin(values ...sqlGoJoinValue) SQLGoJoin
+	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin
+	SQLGoMandatory
 }
 
-type SQLGoJoinValue struct {
-	joinType string
-	table    interface{}
-	alias    string
-	sqlWhere []SqlGoWhereValue
+type (
+	sqlGoJoin struct {
+		values         []sqlGoJoinValue
+		sqlGoParameter SQLGoParameter
+	}
+
+	sqlGoJoinValue struct {
+		joinType string
+		table    sqlGoTable
+		alias    sqlGoAlias
+		sqlWhere []sqlGoWhereValue
+	}
+)
+
+func NewSQLGoJoin() SQLGoJoin {
+	return &sqlGoJoin{}
 }
 
-func NewSQLGoJoin() *SQLGoJoin {
-	return &SQLGoJoin{}
-}
-
-func SetSQLJoinWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
+func SetSQLJoinWhere(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {
 	return SetSQLWhereNotParam(whereType, whereColumn, operator, value)
 }
 
-func SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...SqlGoWhereValue) SQLGoJoinValue {
-	return SQLGoJoinValue{
+func SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) sqlGoJoinValue {
+	return sqlGoJoinValue{
 		joinType: joinType,
 		table:    table,
 		alias:    alias,
@@ -35,66 +44,60 @@ func SetSQLJoin(joinType string, table interface{}, alias string, sqlWhere ...Sq
 	}
 }
 
-func (sj *SQLGoJoin) SQLJoin(values ...SQLGoJoinValue) *SQLGoJoin {
-	sj.values = append(sj.values, values...)
-	return sj
+func (s *sqlGoJoin) SQLJoin(values ...sqlGoJoinValue) SQLGoJoin {
+	s.values = append(s.values, values...)
+	return s
 }
 
-func (sj *SQLGoJoin) BuildSQL() string {
-	if len(sj.values) < 1 {
-		return ""
+func (s *sqlGoJoin) SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin {
+	s.values = append(s.values, SetSQLJoin(joinType, table, alias, sqlWhere...))
+	return s
+}
+
+func (s *sqlGoJoin) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin {
+	s.sqlGoParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoJoin) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
+}
+
+func (s *sqlGoJoin) BuildSQL() string {
+	var sql string
+	if len(s.values) < 1 {
+		return sql
 	}
 
-	sql := ""
-	for i, v := range sj.values {
-		if i > 0 {
-			sql = fmt.Sprintf("%s ", sql)
-		}
+	for _, v := range s.values {
+		sql = fmt.Sprintf("%s ", sql)
 
 		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...)
 		switch vType := v.table.(type) {
-		case *SQLGo:
+		case SQLGo:
+			vType.SetSQLGoParameter(s.GetSQLGoParameter())
+			s.SetSQLGoParameter(vType.GetSQLGoParameter())
+			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
+			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
 			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s",
 				sql,
 				strings.ToUpper(v.joinType),
-				vType.SetParamsCount(sj.GetParamsCount()).BuildSQL(),
+				vType.BuildSQL(),
 				v.alias,
-				sqlWhere.SetParamsCount(vType.GetParamsCount()).BuildSQL())
-			sj.SetParams(sqlWhere.GetParams()...).
-				SetParams(vType.GetParams()...).
-				SetParamsCount(sqlWhere.GetParamsCount())
+				sqlWhere.BuildSQL(),
+			)
 		default:
+			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
+			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
 			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s",
 				sql,
 				strings.ToUpper(v.joinType),
 				vType,
 				v.alias,
-				sqlWhere.SetParamsCount(sj.GetParamsCount()).BuildSQL())
-			sj.SetParams(sqlWhere.GetParams()...)
-			sj.SetParamsCount(sqlWhere.GetParamsCount())
+				strings.ReplaceAll(sqlWhere.BuildSQL(), " WHERE ", " ON "),
+			)
 		}
 	}
 
-	return strings.ReplaceAll(sql, "WHERE ", "ON ")
-}
-
-func (sj *SQLGoJoin) SetParams(params ...interface{}) *SQLGoJoin {
-	if len(params) < 1 {
-		return sj
-	}
-	sj.params = append(sj.params, params...)
-	return sj
-}
-
-func (sj *SQLGoJoin) GetParams() []interface{} {
-	return sj.params
-}
-
-func (sj *SQLGoJoin) SetParamsCount(paramsCount int) *SQLGoJoin {
-	sj.paramCount = paramsCount
-	return sj
-}
-
-func (sj *SQLGoJoin) GetParamsCount() int {
-	return sj.paramCount
+	return sql
 }

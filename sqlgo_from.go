@@ -2,61 +2,86 @@ package sqlgo
 
 import "fmt"
 
-type SQLGoFrom struct {
-	table      interface{}
-	alias      string
-	params     []interface{}
-	paramCount int
+type SQLGoFrom interface {
+	SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGoFrom
+	SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
+	SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGoFrom
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
+	SQLGoMandatory
 }
 
-func NewSQLGoFrom() *SQLGoFrom {
-	return &SQLGoFrom{}
-}
-
-func (sg *SQLGoFrom) SQLFrom(table interface{}, alias string) *SQLGoFrom {
-	sg.table = table
-	sg.alias = alias
-	return sg
-}
-
-func (sf *SQLGoFrom) BuildSQL() string {
-	if sf.table == nil {
-		return ""
+type (
+	sqlGoFrom struct {
+		table          sqlGoTable
+		alias          sqlGoAlias
+		columns        sqlGoFromColumnSlice
+		sqlGoParameter SQLGoParameter
 	}
 
-	sql := "FROM "
-	switch vType := sf.table.(type) {
-	case *SQLGo:
-		sql = fmt.Sprintf("%s(%s)", sql, vType.SetParamsCount(sf.GetParamsCount()).BuildSQL())
-		sf.SetParams(vType.GetParams()...).
-			SetParamsCount(vType.GetParamsCount())
+	sqlGoFromColumn      string
+	sqlGoFromColumnSlice []sqlGoFromColumn
+)
+
+func NewSQLGoFrom() SQLGoFrom {
+	return &sqlGoFrom{
+		sqlGoParameter: NewSQLGoParameter(),
+	}
+}
+
+func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGoFrom {
+	s.SetSQLFrom(table, alias)
+	s.SetSQLFromColumn(columns...)
+	return s
+}
+
+func (s *sqlGoFrom) SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom {
+	s.table = table
+	s.alias = alias
+	return s
+}
+
+func (s *sqlGoFrom) SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGoFrom {
+	s.columns = append(s.columns, columns...)
+	return s
+}
+
+func (s *sqlGoFrom) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom {
+	s.sqlGoParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoFrom) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
+}
+
+func (s *sqlGoFrom) BuildSQL() string {
+	var sql string
+	if s.table == nil {
+		return sql
+	}
+
+	sql = " FROM "
+	switch vType := s.table.(type) {
+	case SQLGo:
+		vType.SetSQLGoParameter(s.GetSQLGoParameter())
+		sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
+		s.SetSQLGoParameter(vType.GetSQLGoParameter())
 	default:
 		sql = fmt.Sprintf("%s%s", sql, vType)
 	}
 
-	if sf.alias != "" {
-		sql = fmt.Sprintf("%s AS %s", sql, sf.alias)
+	if len(s.columns) > 0 {
+		sql = fmt.Sprintf("%s %s(", sql, s.alias)
+		for i, v := range s.columns {
+			if i > 0 {
+				sql = fmt.Sprintf("%s, ", sql)
+			}
+			sql = fmt.Sprintf("%s%s", sql, v)
+		}
+		sql = fmt.Sprintf("%s)", sql)
+	} else if s.alias != "" {
+		sql = fmt.Sprintf("%s AS %s", sql, s.alias)
 	}
 	return sql
-}
-
-func (sf *SQLGoFrom) SetParams(params ...interface{}) *SQLGoFrom {
-	if len(params) < 1 {
-		return sf
-	}
-	sf.params = append(sf.params, params...)
-	return sf
-}
-
-func (sf *SQLGoFrom) GetParams() []interface{} {
-	return sf.params
-}
-
-func (sf *SQLGoFrom) SetParamsCount(paramsCount int) *SQLGoFrom {
-	sf.paramCount = paramsCount
-	return sf
-}
-
-func (sf *SQLGoFrom) GetParamsCount() int {
-	return sf.paramCount
 }

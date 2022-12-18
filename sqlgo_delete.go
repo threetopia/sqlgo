@@ -2,47 +2,48 @@ package sqlgo
 
 import "fmt"
 
-type SQLGoDelete struct {
-	table      string
-	params     []interface{}
-	paramCount int
+type SQLGoDelete interface {
+	SQLDelete(table sqlGoTable) SQLGoDelete
+	SetSQLDelete(table sqlGoTable) SQLGoDelete
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoDelete
+	SQLGoMandatory
 }
 
-func NewSQLGoDelete() *SQLGoDelete {
-	return &SQLGoDelete{}
+type sqlGoDelete struct {
+	table          sqlGoTable
+	sqlGoParameter SQLGoParameter
 }
 
-func (sd *SQLGoDelete) SQLDelete(table string) *SQLGoDelete {
-	sd.table = table
-	return sd
+func NewSQLGoDelete() SQLGoDelete {
+	return &sqlGoDelete{}
 }
 
-func (sd *SQLGoDelete) BuildSQL() string {
-	if sd.table == "" {
-		return ""
+func (s *sqlGoDelete) SQLDelete(table sqlGoTable) SQLGoDelete {
+	s.table = table
+	return s
+}
+
+func (s *sqlGoDelete) SetSQLDelete(table sqlGoTable) SQLGoDelete {
+	s.table = table
+	return s
+}
+
+func (s *sqlGoDelete) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoDelete {
+	s.sqlGoParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoDelete) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
+}
+
+func (s *sqlGoDelete) BuildSQL() string {
+	var sql string
+	if s.table == nil {
+		return sql
 	}
 
-	sql := fmt.Sprintf("DELETE FROM %s", sd.table)
+	sql = fmt.Sprintf("DELETE FROM %s", s.table)
 	return sql
-}
-
-func (sd *SQLGoDelete) SetParams(params ...interface{}) *SQLGoDelete {
-	if len(params) < 1 {
-		return sd
-	}
-	sd.params = append(sd.params, params...)
-	return sd
-}
-
-func (sf *SQLGoDelete) GetParams() []interface{} {
-	return sf.params
-}
-
-func (sf *SQLGoDelete) SetParamsCount(paramsCount int) *SQLGoDelete {
-	sf.paramCount = paramsCount
-	return sf
-}
-
-func (sf *SQLGoDelete) GetParamsCount() int {
-	return sf.paramCount
 }

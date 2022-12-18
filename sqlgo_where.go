@@ -8,6 +8,29 @@ import (
 	"github.com/lib/pq"
 )
 
+type SQLGoWhere interface {
+	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
+	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
+	SQLGoMandatory
+}
+
+type (
+	sqlGoWhere struct {
+		values         []sqlGoWhereValue
+		sqlGOParameter SQLGoParameter
+	}
+
+	sqlGoWhereValue struct {
+		whereType   string
+		whereColumn string
+		operator    string
+		value       interface{}
+		isParam     bool
+	}
+)
+
 var specialOperator = map[string]string{
 	"ANY":       "= ANY ",
 	"ILIKE ANY": " ILIKE ANY ",
@@ -17,30 +40,14 @@ var specialOperator = map[string]string{
 	"ILIKE":     " ILIKE ",
 }
 
-type (
-	SQLGoWhere struct {
-		values     []SqlGoWhereValue
-		params     []interface{}
-		paramCount int
+func NewSQLGoWhere() SQLGoWhere {
+	return &sqlGoWhere{
+		sqlGOParameter: NewSQLGoParameter(),
 	}
-
-	SqlGoWhereValue struct {
-		whereType   string
-		whereColumn string
-		operator    string
-		value       interface{}
-		isParam     bool
-	}
-
-	SqlGoWhereValueSlice []SqlGoWhereValue
-)
-
-func NewSQLGoWhere() *SQLGoWhere {
-	return &SQLGoWhere{}
 }
 
-func SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
-	return SqlGoWhereValue{
+func SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {
+	return sqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
 		operator:    operator,
@@ -49,8 +56,8 @@ func SetSQLWhere(whereType string, whereColumn string, operator string, value in
 	}
 }
 
-func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, value interface{}) SqlGoWhereValue {
-	return SqlGoWhereValue{
+func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {
+	return sqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
 		operator:    operator,
@@ -59,18 +66,33 @@ func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, 
 	}
 }
 
-func (sw *SQLGoWhere) SQLWhere(values ...SqlGoWhereValue) *SQLGoWhere {
-	sw.values = append(sw.values, values...)
-	return sw
+func (s *sqlGoWhere) SQLWhere(values ...sqlGoWhereValue) SQLGoWhere {
+	s.values = append(s.values, values...)
+	return s
 }
 
-func (sw *SQLGoWhere) BuildSQL() string {
-	if len(sw.values) < 1 {
-		return ""
+func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere {
+	s.values = append(s.values, SetSQLWhere(whereType, whereColumn, operator, value))
+	return s
+}
+
+func (s *sqlGoWhere) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere {
+	s.sqlGOParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoWhere) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGOParameter
+}
+
+func (s *sqlGoWhere) BuildSQL() string {
+	var sql string
+	if len(s.values) < 1 {
+		return sql
 	}
 
-	sql := "WHERE "
-	for i, v := range sw.values {
+	sql = " WHERE "
+	for i, v := range s.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(v.whereType))
 		}
@@ -81,25 +103,24 @@ func (sw *SQLGoWhere) BuildSQL() string {
 		}
 
 		switch vType := v.value.(type) {
-		case *SQLGo:
-			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.SetParamsCount(sw.GetParamsCount()).BuildSQL())
-			sw.SetParams(vType.GetParams()...).
-				SetParamsCount(vType.GetParamsCount())
+		case SQLGo:
+			vType.SetSQLGoParameter(s.GetSQLGoParameter())
+			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.BuildSQL())
+			s.SetSQLGoParameter(vType.GetSQLGoParameter())
 		case []string:
-			sql = buildWhereSlice(sw, sql, operator, v, vType)
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []int:
-			sql = buildWhereSlice(sw, sql, operator, v, vType)
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []int64:
-			sql = buildWhereSlice(sw, sql, operator, v, vType)
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []float64:
-			sql = buildWhereSlice(sw, sql, operator, v, vType)
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		default:
 			if !v.isParam {
 				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, vType)
 			} else {
-				sw.SetParams(vType)
-				sw.SetParamsCount(sw.GetParamsCount() + 1)
-				sql = fmt.Sprintf("%s%s%s$%d", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+				s.sqlGOParameter.SetSQLParameter(vType)
+				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType))
 			}
 		}
 	}
@@ -107,28 +128,7 @@ func (sw *SQLGoWhere) BuildSQL() string {
 	return sql
 }
 
-func (sw *SQLGoWhere) SetParams(params ...interface{}) *SQLGoWhere {
-	if len(params) < 1 {
-		return sw
-	}
-	sw.params = append(sw.params, params...)
-	return sw
-}
-
-func (sw *SQLGoWhere) GetParams() []interface{} {
-	return sw.params
-}
-
-func (sw *SQLGoWhere) SetParamsCount(paramsCount int) *SQLGoWhere {
-	sw.paramCount = paramsCount
-	return sw
-}
-
-func (sw *SQLGoWhere) GetParamsCount() int {
-	return sw.paramCount
-}
-
-func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere, sql string, operator string, v SqlGoWhereValue, vType []V) string {
+func buildWhereSlice[V string | int | int64 | float32 | float64](s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType []V) string {
 	loadedValue := make(map[V]bool)
 	cleanVType := make([]V, 0)
 	for _, vAny := range vType {
@@ -152,9 +152,8 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 			if !v.isParam {
 				sql = fmt.Sprintf("%s%x", sql, vIn)
 			} else {
-				sw.SetParams(vIn)
-				sw.SetParamsCount(sw.GetParamsCount() + 1)
-				sql = fmt.Sprintf("%s$%d", sql, sw.GetParamsCount())
+				s.GetSQLGoParameter().SetSQLParameter(vIn)
+				sql = fmt.Sprintf("%s%s", sql, s.GetSQLGoParameter().GetSQLParameterSign(vIn))
 			}
 		}
 		sql = fmt.Sprintf("%s)", sql)
@@ -162,13 +161,15 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](sw *SQLGoWhere,
 		if !v.isParam {
 			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
 		} else {
+			var paramSign string
 			if reflect.TypeOf(vType).Kind() == reflect.Slice {
-				sw.SetParams(pq.Array(vType))
+				s.GetSQLGoParameter().SetSQLParameter(pq.Array(vType))
+				paramSign = s.GetSQLGoParameter().GetSQLParameterSign(pq.Array(vType))
 			} else {
-				sw.SetParams(vType)
+				s.GetSQLGoParameter().SetSQLParameter(vType)
+				paramSign = s.GetSQLGoParameter().GetSQLParameterSign(vType)
 			}
-			sw.SetParamsCount(sw.GetParamsCount() + 1)
-			sql = fmt.Sprintf("%s%s%s($%d)", sql, v.whereColumn, v.operator, sw.GetParamsCount())
+			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, paramSign)
 		}
 	}
 	return sql

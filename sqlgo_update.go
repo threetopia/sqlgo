@@ -2,79 +2,86 @@ package sqlgo
 
 import "fmt"
 
-type SQLGoUpdate struct {
-	table      string
-	values     []SQLGoUpdateValue
-	params     []interface{}
-	paramCount int
+type SQLGoUpdate interface {
+	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate
+	SetSQLUpdate(table sqlGoTable) SQLGoUpdate
+	SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate
+	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate
+
+	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
+	SQLGoMandatory
 }
 
-type SQLGoUpdateValue struct {
-	column string
-	value  interface{}
+type (
+	sqlGoUpdate struct {
+		table          sqlGoTable
+		values         sqlGoUpdateValueSlice
+		sqlGoParameter SQLGoParameter
+	}
+
+	sqlGoUpdateValue struct {
+		column string
+		value  interface{}
+	}
+	sqlGoUpdateValueSlice []sqlGoUpdateValue
+)
+
+func NewSQLGoUpdate() SQLGoUpdate {
+	return &sqlGoUpdate{
+		sqlGoParameter: NewSQLGoParameter(),
+	}
 }
 
-func NewSQLGoUpdate() *SQLGoUpdate {
-	return &SQLGoUpdate{}
-}
-
-func SetUpdate(column string, value interface{}) SQLGoUpdateValue {
-	return SQLGoUpdateValue{
+func SetSQLUpdateValue(column string, value interface{}) sqlGoUpdateValue {
+	return sqlGoUpdateValue{
 		column: column,
 		value:  value,
 	}
 }
 
-func (su *SQLGoUpdate) SQLUpdate(table string, values ...SQLGoUpdateValue) *SQLGoUpdate {
-	su.setSQLUpdateTable(table)
-	su.setSQLUpdateValue(values...)
-	return su
+func (s *sqlGoUpdate) SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate {
+	s.SetSQLUpdate(table)
+	s.SetSQLUpdateValueSlice(values...)
+	return s
 }
 
-func (su *SQLGoUpdate) BuildSQL() string {
-	if len(su.values) < 1 {
-		return ""
+func (s *sqlGoUpdate) SetSQLUpdate(table sqlGoTable) SQLGoUpdate {
+	s.table = table
+	return s
+}
+
+func (s *sqlGoUpdate) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate {
+	s.values = append(s.values, values...)
+	return s
+}
+
+func (s *sqlGoUpdate) SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate {
+	s.SetSQLUpdateValueSlice(SetSQLUpdateValue(column, value))
+	return s
+}
+
+func (s *sqlGoUpdate) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate {
+	s.sqlGoParameter = sqlGoParameter
+	return s
+}
+
+func (s *sqlGoUpdate) GetSQLGoParameter() SQLGoParameter {
+	return s.sqlGoParameter
+}
+
+func (s *sqlGoUpdate) BuildSQL() string {
+	var sql string
+	if len(s.values) < 1 {
+		return sql
 	}
 
-	sql := fmt.Sprintf("UPDATE %s SET ", su.table)
-	for i, v := range su.values {
+	sql = fmt.Sprintf("UPDATE %s SET ", s.table)
+	for i, v := range s.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
 		}
-		su.SetParams(v.value)
-		su.SetParamsCount(su.GetParamsCount() + 1)
-		sql = fmt.Sprintf("%s%s=$%d", sql, v.column, su.GetParamsCount())
+		s.sqlGoParameter.SetSQLParameter(v.value)
+		sql = fmt.Sprintf("%s%s=%s", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(v.value))
 	}
 	return sql
-}
-
-func (su *SQLGoUpdate) setSQLUpdateTable(table string) *SQLGoUpdate {
-	su.table = table
-	return su
-}
-
-func (su *SQLGoUpdate) setSQLUpdateValue(values ...SQLGoUpdateValue) *SQLGoUpdate {
-	su.values = append(su.values, values...)
-	return su
-}
-
-func (su *SQLGoUpdate) SetParams(params ...interface{}) *SQLGoUpdate {
-	if len(params) < 1 {
-		return su
-	}
-	su.params = append(su.params, params...)
-	return su
-}
-
-func (su *SQLGoUpdate) GetParams() []interface{} {
-	return su.params
-}
-
-func (su *SQLGoUpdate) SetParamsCount(paramsCount int) *SQLGoUpdate {
-	su.paramCount = paramsCount
-	return su
-}
-
-func (su *SQLGoUpdate) GetParamsCount() int {
-	return su.paramCount
 }
