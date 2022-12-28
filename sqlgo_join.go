@@ -15,7 +15,7 @@ type SQLGoJoin interface {
 
 type (
 	sqlGoJoin struct {
-		values         []sqlGoJoinValue
+		valueSlice     sqlGoJoinValueSlice
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -23,8 +23,10 @@ type (
 		joinType string
 		table    sqlGoTable
 		alias    sqlGoAlias
-		sqlWhere []sqlGoWhereValue
+		sqlWhere sqlGoWhereValueSlice
 	}
+
+	sqlGoJoinValueSlice []sqlGoJoinValue
 )
 
 func NewSQLGoJoin() SQLGoJoin {
@@ -45,12 +47,12 @@ func SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ..
 }
 
 func (s *sqlGoJoin) SQLJoin(values ...sqlGoJoinValue) SQLGoJoin {
-	s.values = append(s.values, values...)
+	s.valueSlice = append(s.valueSlice, values...)
 	return s
 }
 
 func (s *sqlGoJoin) SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin {
-	s.values = append(s.values, SetSQLJoin(joinType, table, alias, sqlWhere...))
+	s.valueSlice = append(s.valueSlice, SetSQLJoin(joinType, table, alias, sqlWhere...))
 	return s
 }
 
@@ -65,12 +67,14 @@ func (s *sqlGoJoin) GetSQLGoParameter() SQLGoParameter {
 
 func (s *sqlGoJoin) BuildSQL() string {
 	var sql string
-	if len(s.values) < 1 {
+	if len(s.valueSlice) < 1 {
 		return sql
 	}
 
-	for _, v := range s.values {
-		sql = fmt.Sprintf("%s ", sql)
+	for i, v := range s.valueSlice {
+		if i > 0 {
+			sql = fmt.Sprintf("%s ", sql)
+		}
 
 		sqlWhere := NewSQLGo().SQLWhere(v.sqlWhere...)
 		switch vType := v.table.(type) {
@@ -79,7 +83,7 @@ func (s *sqlGoJoin) BuildSQL() string {
 			s.SetSQLGoParameter(vType.GetSQLGoParameter())
 			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
-			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s%s",
+			sql = fmt.Sprintf("%s%s JOIN (%s) AS %s %s",
 				sql,
 				strings.ToUpper(v.joinType),
 				vType.BuildSQL(),
@@ -89,12 +93,12 @@ func (s *sqlGoJoin) BuildSQL() string {
 		default:
 			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
-			sql = fmt.Sprintf("%s%s JOIN %s AS %s%s",
+			sql = fmt.Sprintf("%s%s JOIN %s AS %s %s",
 				sql,
 				strings.ToUpper(v.joinType),
 				vType,
 				v.alias,
-				strings.ReplaceAll(sqlWhere.BuildSQL(), " WHERE ", " ON "),
+				strings.ReplaceAll(sqlWhere.BuildSQL(), "WHERE", "ON"),
 			)
 		}
 	}

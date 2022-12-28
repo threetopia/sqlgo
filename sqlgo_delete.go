@@ -3,7 +3,7 @@ package sqlgo
 import "fmt"
 
 type SQLGoDelete interface {
-	SQLDelete(table sqlGoTable) SQLGoDelete
+	SQLDelete(table sqlGoTable, sqlWhere ...sqlGoWhereValue) SQLGoDelete
 	SetSQLDelete(table sqlGoTable) SQLGoDelete
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoDelete
@@ -19,7 +19,7 @@ func NewSQLGoDelete() SQLGoDelete {
 	return &sqlGoDelete{}
 }
 
-func (s *sqlGoDelete) SQLDelete(table sqlGoTable) SQLGoDelete {
+func (s *sqlGoDelete) SQLDelete(table sqlGoTable, sqlWhere ...sqlGoWhereValue) SQLGoDelete {
 	s.table = table
 	return s
 }
