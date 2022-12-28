@@ -18,7 +18,7 @@ type SQLGoWhere interface {
 
 type (
 	sqlGoWhere struct {
-		values         []sqlGoWhereValue
+		values         sqlGoWhereValueSlice
 		sqlGOParameter SQLGoParameter
 	}
 
@@ -29,6 +29,8 @@ type (
 		value       interface{}
 		isParam     bool
 	}
+
+	sqlGoWhereValueSlice []sqlGoWhereValue
 )
 
 var specialOperator = map[string]string{
