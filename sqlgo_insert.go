@@ -88,8 +88,11 @@ func (s *sqlGoInsert) BuildSQL() string {
 		}
 		sql = fmt.Sprintf("%s%s", sql, v)
 	}
-
 	sql = fmt.Sprintf("%s)", sql)
+
+	if len(s.values) < 1 {
+		return sql
+	}
 	sql = fmt.Sprintf("%s VALUES ", sql)
 	for iValues, vValues := range s.values {
 		if iValues > 0 {

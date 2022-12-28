@@ -66,7 +66,7 @@ func (s *sqlGoOffsetLimit) GetSQLGoParameter() SQLGoParameter {
 func (s *sqlGoOffsetLimit) BuildSQL() string {
 	var sql string
 	if s.offset >= 0 && s.limit > 0 {
-		sql = fmt.Sprintf(" OFFSET %d", s.offset)
+		sql = fmt.Sprintf("OFFSET %d", s.offset)
 	}
 	if s.limit > 0 {
 		if sql != "" {

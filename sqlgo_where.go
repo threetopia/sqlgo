@@ -91,7 +91,7 @@ func (s *sqlGoWhere) BuildSQL() string {
 		return sql
 	}
 
-	sql = " WHERE "
+	sql = "WHERE "
 	for i, v := range s.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(v.whereType))

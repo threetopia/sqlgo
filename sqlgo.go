@@ -14,9 +14,6 @@ type SQLGoMandatory interface {
 }
 
 type SQLGo interface {
-	SQLSelect(values ...sqlGoSelectValue) SQLGo
-	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
-
 	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGo
 	SetSQLInsert(table sqlGoTable) SQLGo
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
@@ -29,6 +26,9 @@ type SQLGo interface {
 
 	SQLDelete(table sqlGoTable) SQLGo
 	SetSQLDelete(table sqlGoTable) SQLGo
+
+	SQLSelect(values ...sqlGoSelectValue) SQLGo
+	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo
@@ -55,10 +55,10 @@ type SQLGo interface {
 
 type (
 	sqlGo struct {
-		sqlGoSelect      SQLGoSelect
 		sqlGoInsert      SQLGoInsert
 		sqlGoUpdate      SQLGoUpdate
 		sqlGoDelete      SQLGoDelete
+		sqlGoSelect      SQLGoSelect
 		sqlGoValues      SQLGoValues
 		sqlGoFrom        SQLGoFrom
 		sqlGoJoin        SQLGoJoin
@@ -75,10 +75,10 @@ type (
 
 func NewSQLGo() SQLGo {
 	return &sqlGo{
-		sqlGoSelect:      NewSQLGoSelect(),
 		sqlGoInsert:      NewSQLGoInsert(),
 		sqlGoUpdate:      NewSQLGoUpdate(),
 		sqlGoDelete:      NewSQLGoDelete(),
+		sqlGoSelect:      NewSQLGoSelect(),
 		sqlGoValues:      NewSQLGoValues(),
 		sqlGoFrom:        NewSQLGoFrom(),
 		sqlGoJoin:        NewSQLGoJoin(),
@@ -95,16 +95,6 @@ func (s *sqlGo) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo {
 
 func (s *sqlGo) GetSQLGoParameter() SQLGoParameter {
 	return s.sqlGoParameter
-}
-
-func (s *sqlGo) SQLSelect(values ...sqlGoSelectValue) SQLGo {
-	s.sqlGoSelect.SQLSelect(values...)
-	return s
-}
-
-func (s *sqlGo) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo {
-	s.sqlGoSelect.SetSQLSelect(value, alias)
-	return s
 }
 
 func (s *sqlGo) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGo {
@@ -154,6 +144,16 @@ func (s *sqlGo) SQLDelete(table sqlGoTable) SQLGo {
 
 func (s *sqlGo) SetSQLDelete(table sqlGoTable) SQLGo {
 	s.sqlGoDelete.SQLDelete(table)
+	return s
+}
+
+func (s *sqlGo) SQLSelect(values ...sqlGoSelectValue) SQLGo {
+	s.sqlGoSelect.SQLSelect(values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo {
+	s.sqlGoSelect.SetSQLSelect(value, alias)
 	return s
 }
 
@@ -229,41 +229,50 @@ func (s *sqlGo) SetSQLPage(page int) SQLGo {
 
 func (s *sqlGo) BuildSQL() string {
 	sql := ""
-	s.sqlGoSelect.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoSelect.BuildSQL())
-	s.SetSQLGoParameter(s.sqlGoSelect.GetSQLGoParameter())
-
 	s.sqlGoInsert.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoInsert.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoInsert.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoInsert.GetSQLGoParameter())
 
 	s.sqlGoUpdate.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoUpdate.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoUpdate.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoUpdate.GetSQLGoParameter())
 
 	s.sqlGoDelete.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoDelete.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoDelete.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoDelete.GetSQLGoParameter())
 
+	s.sqlGoSelect.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = combineSQL(sql, s.sqlGoSelect.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoSelect.GetSQLGoParameter())
+
 	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoFrom.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoFrom.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoFrom.GetSQLGoParameter())
 
 	s.sqlGoJoin.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoJoin.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoJoin.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoJoin.GetSQLGoParameter())
 
 	s.sqlGoWhere.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoWhere.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoWhere.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoWhere.GetSQLGoParameter())
 
 	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoValues.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoValues.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
 
 	s.sqlGoOffsetLimit.SetSQLGoParameter(s.GetSQLGoParameter())
-	sql = fmt.Sprintf("%s%s", sql, s.sqlGoOffsetLimit.BuildSQL())
+	sql = combineSQL(sql, s.sqlGoOffsetLimit.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoOffsetLimit.GetSQLGoParameter())
 
 	return sql
+}
+
+func combineSQL(firstSQL string, secondSQL string) string {
+	if secondSQL == "" {
+		return firstSQL
+	} else if firstSQL != "" {
+		firstSQL = fmt.Sprintf("%s ", firstSQL)
+	}
+	return fmt.Sprintf("%s%s", firstSQL, secondSQL)
 }

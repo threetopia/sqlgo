@@ -61,7 +61,7 @@ func (s *sqlGoFrom) BuildSQL() string {
 		return sql
 	}
 
-	sql = " FROM "
+	sql = "FROM "
 	switch vType := s.table.(type) {
 	case SQLGo:
 		vType.SetSQLGoParameter(s.GetSQLGoParameter())
