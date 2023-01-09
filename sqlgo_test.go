@@ -42,6 +42,26 @@ func TestSelectQueryPipeline(t *testing.T) {
 	}
 }
 
+func TestSelectQuerySetByVariable(t *testing.T) {
+	sql := NewSQLGo()
+	sqlSelect := NewSQLGoSelect().
+		SetSQLSelect("t.column_one", "columnOne").
+		SetSQLSelect("t.column_two", "columnTwo").
+		SetSQLSelect("t.column_three", "columnThree").
+		SetSQLSelect("t.column_no_alias", "")
+	sqlFrom := NewSQLGoFrom().SQLFrom("table", "t")
+	sqlJoin := NewSQLGoJoin().SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
+		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id"))
+	sqlWhere := NewSQLGoWhere().SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
+	sql.SetSQLGoSelect(sqlSelect).
+		SetSQLGoFrom(sqlFrom).
+		SetSQLGoJoin(sqlJoin).
+		SetSQLGoWhere(sqlWhere)
+	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
+	}
+}
+
 const deleteQuery string = "DELETE FROM table WHERE column_one=$1"
 
 func TestDeleteQueryPrepend(t *testing.T) {

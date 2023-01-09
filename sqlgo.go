@@ -13,7 +13,21 @@ type SQLGoMandatory interface {
 	BuildSQL() string
 }
 
+type SQLGOModuleSetter interface {
+	SetSQLGoInsert(sqlGoInsert SQLGoInsert) SQLGo
+	SetSQLGoUpdate(sqlGoUpdate SQLGoUpdate) SQLGo
+	SetSQLGoDelete(sqlGoDelete SQLGoDelete) SQLGo
+	SetSQLGoSelect(sqlGoSelect SQLGoSelect) SQLGo
+	SetSQLGoValues(sqlGoValues SQLGoValues) SQLGo
+	SetSQLGoFrom(sqlGoFrom SQLGoFrom) SQLGo
+	SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo
+	SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo
+	SetSQLGoOffsetLimit(sqlGoOffsetLimit SQLGoOffsetLimit) SQLGo
+}
+
 type SQLGo interface {
+	SQLGOModuleSetter
+
 	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGo
 	SetSQLInsert(table sqlGoTable) SQLGo
 	SetSQLInsertColumn(columns ...sqlGoInsertColumn) SQLGo
@@ -88,6 +102,51 @@ func NewSQLGo() SQLGo {
 	}
 }
 
+func (s *sqlGo) SetSQLGoInsert(sqlGoInsert SQLGoInsert) SQLGo {
+	s.sqlGoInsert = sqlGoInsert
+	return s
+}
+
+func (s *sqlGo) SetSQLGoUpdate(sqlGoUpdate SQLGoUpdate) SQLGo {
+	s.sqlGoUpdate = sqlGoUpdate
+	return s
+}
+
+func (s *sqlGo) SetSQLGoDelete(sqlGoDelete SQLGoDelete) SQLGo {
+	s.sqlGoDelete = sqlGoDelete
+	return s
+}
+
+func (s *sqlGo) SetSQLGoSelect(sqlGoSelect SQLGoSelect) SQLGo {
+	s.sqlGoSelect = sqlGoSelect
+	return s
+}
+
+func (s *sqlGo) SetSQLGoValues(sqlGoValues SQLGoValues) SQLGo {
+	s.sqlGoValues = sqlGoValues
+	return s
+}
+
+func (s *sqlGo) SetSQLGoFrom(sqlGoFrom SQLGoFrom) SQLGo {
+	s.sqlGoFrom = sqlGoFrom
+	return s
+}
+
+func (s *sqlGo) SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo {
+	s.sqlGoJoin = sqlGoJoin
+	return s
+}
+
+func (s *sqlGo) SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo {
+	s.sqlGoWhere = sqlGoWhere
+	return s
+}
+
+func (s *sqlGo) SetSQLGoOffsetLimit(sqlGoOffsetLimit SQLGoOffsetLimit) SQLGo {
+	s.sqlGoOffsetLimit = sqlGoOffsetLimit
+	return s
+}
+
 func (s *sqlGo) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -138,7 +197,8 @@ func (s *sqlGo) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo {
 }
 
 func (s *sqlGo) SQLDelete(table sqlGoTable, sqlWhere ...sqlGoWhereValue) SQLGo {
-	s.sqlGoDelete.SQLDelete(table, sqlWhere...)
+	s.sqlGoDelete.SQLDelete(table)
+	s.sqlGoWhere.SQLWhere(sqlWhere...)
 	return s
 }
 
