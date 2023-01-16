@@ -27,9 +27,7 @@ type (
 )
 
 func NewSQLGoUpdate() SQLGoUpdate {
-	return &sqlGoUpdate{
-		sqlGoParameter: NewSQLGoParameter(),
-	}
+	return new(sqlGoUpdate)
 }
 
 func SetSQLUpdateValue(column string, value interface{}) sqlGoUpdateValue {

@@ -25,6 +25,7 @@ func TestSelectQueryPrepend(t *testing.T) {
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
 	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 func TestSelectQueryPipeline(t *testing.T) {
@@ -40,6 +41,7 @@ func TestSelectQueryPipeline(t *testing.T) {
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
 	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 func TestSelectQuerySetByVariable(t *testing.T) {
@@ -60,6 +62,7 @@ func TestSelectQuerySetByVariable(t *testing.T) {
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
 	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 const deleteQuery string = "DELETE FROM table WHERE column_one=$1"

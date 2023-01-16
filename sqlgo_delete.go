@@ -16,7 +16,7 @@ type sqlGoDelete struct {
 }
 
 func NewSQLGoDelete() SQLGoDelete {
-	return &sqlGoDelete{}
+	return new(sqlGoDelete)
 }
 
 func (s *sqlGoDelete) SQLDelete(table sqlGoTable) SQLGoDelete {

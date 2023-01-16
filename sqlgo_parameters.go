@@ -20,7 +20,7 @@ type sqlGoParameter struct {
 }
 
 func NewSQLGoParameter() SQLGoParameter {
-	return &sqlGoParameter{}
+	return new(sqlGoParameter)
 }
 
 func (s *sqlGoParameter) GetSQLGoParameter() SQLGoParameter {

@@ -30,7 +30,7 @@ type (
 )
 
 func NewSQLGoJoin() SQLGoJoin {
-	return &sqlGoJoin{}
+	return new(sqlGoJoin)
 }
 
 func SetSQLJoinWhere(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {

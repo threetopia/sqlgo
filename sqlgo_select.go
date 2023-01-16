@@ -23,9 +23,7 @@ type (
 )
 
 func NewSQLGoSelect() SQLGoSelect {
-	return &sqlGoSelect{
-		sqlGoParameter: NewSQLGoParameter(),
-	}
+	return new(sqlGoSelect)
 }
 
 func SetSQLSelect(value interface{}, alias sqlGoAlias) sqlGoSelectValue {

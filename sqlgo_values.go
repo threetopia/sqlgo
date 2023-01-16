@@ -21,7 +21,7 @@ type (
 )
 
 func NewSQLGoValues() SQLGoValues {
-	return &sqlGoValues{}
+	return new(sqlGoValues)
 }
 
 func SetSQLValuesValue(values ...sqlGoValuesValue) sqlGoValuesValueSlice {

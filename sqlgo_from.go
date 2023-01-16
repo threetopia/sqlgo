@@ -24,9 +24,7 @@ type (
 )
 
 func NewSQLGoFrom() SQLGoFrom {
-	return &sqlGoFrom{
-		sqlGoParameter: NewSQLGoParameter(),
-	}
+	return new(sqlGoFrom)
 }
 
 func (s *sqlGoFrom) SQLFrom(table sqlGoTable, alias sqlGoAlias, columns ...sqlGoFromColumn) SQLGoFrom {

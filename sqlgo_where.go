@@ -43,9 +43,7 @@ var specialOperator = map[string]string{
 }
 
 func NewSQLGoWhere() SQLGoWhere {
-	return &sqlGoWhere{
-		sqlGOParameter: NewSQLGoParameter(),
-	}
+	return new(sqlGoWhere)
 }
 
 func SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {

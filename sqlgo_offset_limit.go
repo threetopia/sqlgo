@@ -20,9 +20,7 @@ type sqlGoOffsetLimit struct {
 }
 
 func NewSQLGoOffsetLimit() SQLGoOffsetLimit {
-	return &sqlGoOffsetLimit{
-		sqlGoParameter: NewSQLGoParameter(),
-	}
+	return new(sqlGoOffsetLimit)
 }
 
 func (s *sqlGoOffsetLimit) SQLOffsetLimit(offset int, limit int) SQLGoOffsetLimit {

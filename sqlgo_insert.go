@@ -28,7 +28,7 @@ type (
 )
 
 func NewSQLGoInsert() SQLGoInsert {
-	return &sqlGoInsert{}
+	return new(sqlGoInsert)
 }
 
 func SetSQLInsertColumn(columns ...sqlGoInsertColumn) sqlGoInsertColumnSlice {
