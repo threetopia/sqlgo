@@ -24,7 +24,9 @@ func (s *sqlGoSchema) SetSQLSchema(schema string) SQLGoSchema {
 }
 
 func (s *sqlGoSchema) SQLSchema(schema string) SQLGoSchema {
-	s.schema = schema
+	if s.schema == "" {
+		s.schema = schema
+	}
 	return s
 }
 
