@@ -7,6 +7,7 @@ type SQLGoFrom interface {
 	SetSQLFrom(table sqlGoTable, alias sqlGoAlias) SQLGoFrom
 	SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGoFrom
 
+	SetSQLGoSchema(schema SQLGoSchema) SQLGoFrom
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
 	SQLGoMandatory
 }
@@ -16,6 +17,7 @@ type (
 		table          sqlGoTable
 		alias          sqlGoAlias
 		columns        sqlGoFromColumnSlice
+		sqlGoSchema    SQLGoSchema
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -44,6 +46,11 @@ func (s *sqlGoFrom) SetSQLFromColumn(columns ...sqlGoFromColumn) SQLGoFrom {
 	return s
 }
 
+func (s *sqlGoFrom) SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGoFrom {
+	s.sqlGoSchema = sqlGoSchema
+	return s
+}
+
 func (s *sqlGoFrom) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -66,7 +73,7 @@ func (s *sqlGoFrom) BuildSQL() string {
 		sql = fmt.Sprintf("%s(%s)", sql, vType.BuildSQL())
 		s.SetSQLGoParameter(vType.GetSQLGoParameter())
 	default:
-		sql = fmt.Sprintf("%s%s", sql, vType)
+		sql = fmt.Sprintf("%s%s%s", sql, s.sqlGoSchema.BuildSQL(), vType)
 	}
 
 	if len(s.columns) > 0 {

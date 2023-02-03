@@ -9,6 +9,7 @@ type SQLGoInsert interface {
 	SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert
 	SetSQLInsertValueSlice(values ...sqlGoInsertValueSlice) SQLGoInsert
 
+	SetSQLGoSchema(schema SQLGoSchema) SQLGoInsert
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoInsert
 	SQLGoMandatory
 }
@@ -18,6 +19,7 @@ type (
 		table          sqlGoTable
 		columns        sqlGoInsertColumnSlice
 		values         []sqlGoInsertValueSlice
+		sqlGoSchema    SQLGoSchema
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -66,6 +68,11 @@ func (s *sqlGoInsert) SetSQLInsertValue(values ...sqlGoInsertValue) SQLGoInsert 
 	return s
 }
 
+func (s *sqlGoInsert) SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGoInsert {
+	s.sqlGoSchema = sqlGoSchema
+	return s
+}
+
 func (s *sqlGoInsert) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoInsert {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -81,7 +88,7 @@ func (s *sqlGoInsert) BuildSQL() string {
 		return sql
 	}
 
-	sql = fmt.Sprintf("INSERT INTO %s (", s.table)
+	sql = fmt.Sprintf("INSERT INTO %s%s (", s.sqlGoSchema.BuildSQL(), s.table)
 	for i, v := range s.columns {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
