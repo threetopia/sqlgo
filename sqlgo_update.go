@@ -8,6 +8,7 @@ type SQLGoUpdate interface {
 	SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate
 	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate
 
+	SetSQLGoSchema(schema SQLGoSchema) SQLGoUpdate
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
 	SQLGoMandatory
 }
@@ -16,6 +17,7 @@ type (
 	sqlGoUpdate struct {
 		table          sqlGoTable
 		values         sqlGoUpdateValueSlice
+		sqlGoSchema    SQLGoSchema
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -58,6 +60,11 @@ func (s *sqlGoUpdate) SetSQLUpdateValue(column string, value interface{}) SQLGoU
 	return s
 }
 
+func (s *sqlGoUpdate) SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGoUpdate {
+	s.sqlGoSchema = sqlGoSchema
+	return s
+}
+
 func (s *sqlGoUpdate) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -73,7 +80,7 @@ func (s *sqlGoUpdate) BuildSQL() string {
 		return sql
 	}
 
-	sql = fmt.Sprintf("UPDATE %s SET ", s.table)
+	sql = fmt.Sprintf("UPDATE %s%s SET ", s.sqlGoSchema.BuildSQL(), s.table)
 	for i, v := range s.values {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)

@@ -9,6 +9,7 @@ type SQLGoJoin interface {
 	SQLJoin(values ...sqlGoJoinValue) SQLGoJoin
 	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGoJoin
 
+	SetSQLGoSchema(schema SQLGoSchema) SQLGoJoin
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin
 	SQLGoMandatory
 }
@@ -16,6 +17,7 @@ type SQLGoJoin interface {
 type (
 	sqlGoJoin struct {
 		valueSlice     sqlGoJoinValueSlice
+		sqlGoSchema    SQLGoSchema
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -56,6 +58,11 @@ func (s *sqlGoJoin) SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAli
 	return s
 }
 
+func (s *sqlGoJoin) SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGoJoin {
+	s.sqlGoSchema = sqlGoSchema
+	return s
+}
+
 func (s *sqlGoJoin) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin {
 	s.sqlGoParameter = sqlGoParameter
 	return s
@@ -93,9 +100,10 @@ func (s *sqlGoJoin) BuildSQL() string {
 		default:
 			sqlWhere.SetSQLGoParameter(s.GetSQLGoParameter())
 			s.SetSQLGoParameter(sqlWhere.GetSQLGoParameter())
-			sql = fmt.Sprintf("%s%s JOIN %s AS %s %s",
+			sql = fmt.Sprintf("%s%s JOIN %s%s AS %s %s",
 				sql,
 				strings.ToUpper(v.joinType),
+				s.sqlGoSchema.BuildSQL(),
 				vType,
 				v.alias,
 				strings.ReplaceAll(sqlWhere.BuildSQL(), "WHERE", "ON"),

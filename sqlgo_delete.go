@@ -6,12 +6,14 @@ type SQLGoDelete interface {
 	SQLDelete(table sqlGoTable) SQLGoDelete
 	SetSQLDelete(table sqlGoTable) SQLGoDelete
 
+	SetSQLGoSchema(schema SQLGoSchema) SQLGoDelete
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoDelete
 	SQLGoMandatory
 }
 
 type sqlGoDelete struct {
 	table          sqlGoTable
+	sqlGoSchema    SQLGoSchema
 	sqlGoParameter SQLGoParameter
 }
 
@@ -26,6 +28,11 @@ func (s *sqlGoDelete) SQLDelete(table sqlGoTable) SQLGoDelete {
 
 func (s *sqlGoDelete) SetSQLDelete(table sqlGoTable) SQLGoDelete {
 	s.SQLDelete(table)
+	return s
+}
+
+func (s *sqlGoDelete) SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGoDelete {
+	s.sqlGoSchema = sqlGoSchema
 	return s
 }
 
@@ -44,6 +51,6 @@ func (s *sqlGoDelete) BuildSQL() string {
 		return sql
 	}
 
-	sql = fmt.Sprintf("DELETE FROM %s", s.table)
+	sql = fmt.Sprintf("DELETE FROM %s%s", s.sqlGoSchema.BuildSQL(), s.table)
 	return sql
 }

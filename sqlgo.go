@@ -23,6 +23,7 @@ type SQLGOModuleSetter interface {
 	SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo
 	SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo
 	SetSQLGoOffsetLimit(sqlGoOffsetLimit SQLGoOffsetLimit) SQLGo
+	SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGo
 }
 
 type SQLGo interface {
@@ -63,6 +64,9 @@ type SQLGo interface {
 	SQLPageLimit(page int, limit int) SQLGo
 	SetSQLPage(page int) SQLGo
 
+	SQLSchema(schema string) SQLGo
+	SetSQLSchema(schema string) SQLGo
+
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo
 	SQLGoMandatory
 }
@@ -78,6 +82,7 @@ type (
 		sqlGoJoin        SQLGoJoin
 		sqlGoWhere       SQLGoWhere
 		sqlGoOffsetLimit SQLGoOffsetLimit
+		sqlGoSchema      SQLGoSchema
 		sqlGoParameter   SQLGoParameter
 	}
 
@@ -98,6 +103,7 @@ func NewSQLGo() SQLGo {
 		sqlGoJoin:        NewSQLGoJoin(),
 		sqlGoWhere:       NewSQLGoWhere(),
 		sqlGoOffsetLimit: NewSQLGoOffsetLimit(),
+		sqlGoSchema:      NewSQLGoSchema(),
 		sqlGoParameter:   NewSQLGoParameter(),
 	}
 }
@@ -145,6 +151,15 @@ func (s *sqlGo) SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo {
 func (s *sqlGo) SetSQLGoOffsetLimit(sqlGoOffsetLimit SQLGoOffsetLimit) SQLGo {
 	s.sqlGoOffsetLimit = sqlGoOffsetLimit
 	return s
+}
+
+func (s *sqlGo) SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGo {
+	s.sqlGoSchema = sqlGoSchema
+	return s
+}
+
+func (s *sqlGo) GetSQLGoSchema() SQLGoSchema {
+	return s.sqlGoSchema
 }
 
 func (s *sqlGo) SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo {
@@ -287,17 +302,33 @@ func (s *sqlGo) SetSQLPage(page int) SQLGo {
 	return s
 }
 
+func (s *sqlGo) SQLSchema(schema string) SQLGo {
+	s.sqlGoSchema.SQLSchema(schema)
+	return s
+}
+
+func (s *sqlGo) SetSQLSchema(schema string) SQLGo {
+	s.sqlGoSchema.SetSQLSchema(schema)
+	return s
+}
+
 func (s *sqlGo) BuildSQL() string {
 	sql := ""
-	s.sqlGoInsert.SetSQLGoParameter(s.GetSQLGoParameter())
+	s.sqlGoInsert.
+		SetSQLGoParameter(s.GetSQLGoParameter()).
+		SetSQLGoSchema(s.GetSQLGoSchema())
 	sql = combineSQL(sql, s.sqlGoInsert.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoInsert.GetSQLGoParameter())
 
-	s.sqlGoUpdate.SetSQLGoParameter(s.GetSQLGoParameter())
+	s.sqlGoUpdate.
+		SetSQLGoParameter(s.GetSQLGoParameter()).
+		SetSQLGoSchema(s.GetSQLGoSchema())
 	sql = combineSQL(sql, s.sqlGoUpdate.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoUpdate.GetSQLGoParameter())
 
-	s.sqlGoDelete.SetSQLGoParameter(s.GetSQLGoParameter())
+	s.sqlGoDelete.
+		SetSQLGoParameter(s.GetSQLGoParameter()).
+		SetSQLGoSchema(s.GetSQLGoSchema())
 	sql = combineSQL(sql, s.sqlGoDelete.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoDelete.GetSQLGoParameter())
 
@@ -305,11 +336,15 @@ func (s *sqlGo) BuildSQL() string {
 	sql = combineSQL(sql, s.sqlGoSelect.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoSelect.GetSQLGoParameter())
 
-	s.sqlGoFrom.SetSQLGoParameter(s.GetSQLGoParameter())
+	s.sqlGoFrom.
+		SetSQLGoParameter(s.GetSQLGoParameter()).
+		SetSQLGoSchema(s.GetSQLGoSchema())
 	sql = combineSQL(sql, s.sqlGoFrom.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoFrom.GetSQLGoParameter())
 
-	s.sqlGoJoin.SetSQLGoParameter(s.GetSQLGoParameter())
+	s.sqlGoJoin.
+		SetSQLGoParameter(s.GetSQLGoParameter()).
+		SetSQLGoSchema(s.GetSQLGoSchema())
 	sql = combineSQL(sql, s.sqlGoJoin.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoJoin.GetSQLGoParameter())
 

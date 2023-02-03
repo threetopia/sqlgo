@@ -4,10 +4,11 @@ import (
 	"testing"
 )
 
-const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM table AS t INNER JOIN join_table1 AS jt1 ON jt1.id=t.id INNER JOIN join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1)"
+const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1)"
 
 func TestSelectQueryPrepend(t *testing.T) {
 	sql := NewSQLGo().
+		SQLSchema("schema").
 		SQLSelect(
 			SetSQLSelect("t.column_one", "columnOne"),
 			SetSQLSelect("t.column_two", "columnTwo"),
@@ -30,6 +31,7 @@ func TestSelectQueryPrepend(t *testing.T) {
 
 func TestSelectQueryPipeline(t *testing.T) {
 	sql := NewSQLGo().
+		SetSQLSchema("schema").
 		SetSQLSelect("t.column_one", "columnOne").
 		SetSQLSelect("t.column_two", "columnTwo").
 		SetSQLSelect("t.column_three", "columnThree").
@@ -46,6 +48,7 @@ func TestSelectQueryPipeline(t *testing.T) {
 
 func TestSelectQuerySetByVariable(t *testing.T) {
 	sql := NewSQLGo()
+	sqlSchema := NewSQLGoSchema().SetSQLSchema("schema")
 	sqlSelect := NewSQLGoSelect().
 		SetSQLSelect("t.column_one", "columnOne").
 		SetSQLSelect("t.column_two", "columnTwo").
@@ -55,7 +58,8 @@ func TestSelectQuerySetByVariable(t *testing.T) {
 	sqlJoin := NewSQLGoJoin().SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
 		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id"))
 	sqlWhere := NewSQLGoWhere().SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
-	sql.SetSQLGoSelect(sqlSelect).
+	sql.SetSQLGoSchema(sqlSchema).
+		SetSQLGoSelect(sqlSelect).
 		SetSQLGoFrom(sqlFrom).
 		SetSQLGoJoin(sqlJoin).
 		SetSQLGoWhere(sqlWhere)
