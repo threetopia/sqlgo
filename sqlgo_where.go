@@ -19,7 +19,7 @@ type SQLGoWhere interface {
 
 type (
 	sqlGoWhere struct {
-		groupValue     sqlGoWhereGroupValue
+		groupValue     sqlGoWhereGroupValueSlice
 		sqlGOParameter SQLGoParameter
 	}
 
@@ -31,13 +31,13 @@ type (
 		isParam     bool
 	}
 
-	sqlGoWhereGroup struct {
+	sqlGoWhereGroupValue struct {
 		valueSlice sqlGoWhereValueSlice
 		whereType  string
 	}
 
-	sqlGoWhereGroupValue []sqlGoWhereGroup
-	sqlGoWhereValueSlice []sqlGoWhereValue
+	sqlGoWhereGroupValueSlice []sqlGoWhereGroupValue
+	sqlGoWhereValueSlice      []sqlGoWhereValue
 )
 
 var specialOperator = map[string]string{
@@ -77,8 +77,8 @@ func (s *sqlGoWhere) SQLWhere(valueSlice ...sqlGoWhereValue) SQLGoWhere {
 	if len(s.groupValue) > 0 {
 		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, valueSlice...)
 	} else {
-		s.groupValue = make(sqlGoWhereGroupValue, 0)
-		s.groupValue = append(s.groupValue, sqlGoWhereGroup{whereType: "AND", valueSlice: valueSlice})
+		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
+		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{whereType: "AND", valueSlice: valueSlice})
 	}
 	return s
 }
@@ -87,8 +87,8 @@ func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator 
 	if len(s.groupValue) > 0 {
 		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhere(whereType, whereColumn, operator, value))
 	} else {
-		s.groupValue = make(sqlGoWhereGroupValue, 0)
-		s.groupValue = append(s.groupValue, sqlGoWhereGroup{
+		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
+		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{
 			whereType:  "AND",
 			valueSlice: append(make(sqlGoWhereValueSlice, 0), SetSQLWhere(whereType, whereColumn, operator, value)),
 		})
@@ -98,9 +98,9 @@ func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator 
 
 func (s *sqlGoWhere) SQLWhereGroup(whereType string, valueSlice ...sqlGoWhereValue) SQLGoWhere {
 	if len(s.groupValue) < 1 {
-		s.groupValue = make(sqlGoWhereGroupValue, 0)
+		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
 	}
-	s.groupValue = append(s.groupValue, sqlGoWhereGroup{whereType: whereType, valueSlice: valueSlice})
+	s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{whereType: whereType, valueSlice: valueSlice})
 
 	return s
 }
