@@ -58,6 +58,7 @@ type SQLGo interface {
 	SQLWhere(values ...sqlGoWhereValue) SQLGo
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
+	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 
 	SQLOffsetLimit(offset int, limit int) SQLGo
 	SetSQLLimit(limit int) SQLGo
@@ -279,6 +280,11 @@ func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator strin
 }
 
 func (s *sqlGo) SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo {
+	s.sqlGoWhere.SQLWhereGroup(whereType, values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo {
 	s.sqlGoWhere.SQLWhereGroup(whereType, values...)
 	return s
 }
