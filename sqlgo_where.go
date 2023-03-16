@@ -101,7 +101,6 @@ func (s *sqlGoWhere) SQLWhereGroup(whereType string, valueSlice ...sqlGoWhereVal
 		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
 	}
 	s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{whereType: whereType, valueSlice: valueSlice})
-
 	return s
 }
 
@@ -163,7 +162,6 @@ func (s *sqlGoWhere) BuildSQL() string {
 		} else {
 			sql = fmt.Sprintf("%s%s", sql, sqlVal)
 		}
-
 	}
 
 	return sql
