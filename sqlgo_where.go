@@ -12,6 +12,7 @@ type SQLGoWhere interface {
 	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
+	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
 	SQLGoMandatory
@@ -101,6 +102,11 @@ func (s *sqlGoWhere) SQLWhereGroup(whereType string, valueSlice ...sqlGoWhereVal
 		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
 	}
 	s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{whereType: whereType, valueSlice: valueSlice})
+	return s
+}
+
+func (s *sqlGoWhere) SetSQLWhereGroup(whereType string, valueSlice ...sqlGoWhereValue) SQLGoWhere {
+	s.SQLWhereGroup(whereType, valueSlice...)
 	return s
 }
 

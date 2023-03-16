@@ -285,7 +285,7 @@ func (s *sqlGo) SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 }
 
 func (s *sqlGo) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo {
-	s.sqlGoWhere.SQLWhereGroup(whereType, values...)
+	s.sqlGoWhere.SetSQLWhereGroup(whereType, values...)
 	return s
 }
 
