@@ -157,7 +157,7 @@ func (s *sqlGoWhere) BuildSQL() string {
 		}
 		if len(s.groupValue) > 1 {
 			if ig > 0 {
-				sql = fmt.Sprintf("%s %s ", sql, vg.whereType)
+				sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(vg.whereType))
 			}
 			sql = fmt.Sprintf("%s(%s)", sql, sqlVal)
 		} else {
