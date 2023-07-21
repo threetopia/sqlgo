@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1)"
+const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1) ORDER BY columnOne ASC, columnTwo DESC"
 
 func TestSelectQueryPrepend(t *testing.T) {
 	sql := NewSQLGo().
@@ -22,7 +22,8 @@ func TestSelectQueryPrepend(t *testing.T) {
 		).
 		SQLWhere(
 			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
-		)
+		).
+		SQLOrder(SetSQLOrder("columnOne", "ASC"), SetSQLOrder("columnTwo", "DESC"))
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
 	}
@@ -39,7 +40,9 @@ func TestSelectQueryPipeline(t *testing.T) {
 		SQLFrom("table", "t").
 		SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
 		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")).
-		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
+		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}).
+		SetSQLOrder("columnOne", "ASC").
+		SetSQLOrder("columnTwo", "DESC")
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
 	}
@@ -58,11 +61,13 @@ func TestSelectQuerySetByVariable(t *testing.T) {
 	sqlJoin := NewSQLGoJoin().SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
 		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id"))
 	sqlWhere := NewSQLGoWhere().SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
+	sqlOrder := NewSQLGoOrder().SetSQLOrder("columnOne", "ASC").SetSQLOrder("columnTwo", "DESC")
 	sql.SetSQLGoSchema(sqlSchema).
 		SetSQLGoSelect(sqlSelect).
 		SetSQLGoFrom(sqlFrom).
 		SetSQLGoJoin(sqlJoin).
-		SetSQLGoWhere(sqlWhere)
+		SetSQLGoWhere(sqlWhere).
+		SetSQLGoOrder(sqlOrder)
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectQuery, sqlStr)
 	}

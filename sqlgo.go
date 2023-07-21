@@ -22,6 +22,7 @@ type SQLGOModuleSetter interface {
 	SetSQLGoFrom(sqlGoFrom SQLGoFrom) SQLGo
 	SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo
 	SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo
+	SetSQLGoOrder(sqlGoOrder SQLGoOrder) SQLGo
 	SetSQLGoOffsetLimit(sqlGoOffsetLimit SQLGoOffsetLimit) SQLGo
 	SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGo
 }
@@ -60,6 +61,9 @@ type SQLGo interface {
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 
+	SQLOrder(values ...sqlGoOrderValue) SQLGo
+	SetSQLOrder(value sqlGoValue, order string) SQLGo
+
 	SQLOffsetLimit(offset int, limit int) SQLGo
 	SetSQLLimit(limit int) SQLGo
 	SetSQLOffset(offset int) SQLGo
@@ -83,6 +87,7 @@ type (
 		sqlGoFrom        SQLGoFrom
 		sqlGoJoin        SQLGoJoin
 		sqlGoWhere       SQLGoWhere
+		sqlGoOrder       SQLGoOrder
 		sqlGoOffsetLimit SQLGoOffsetLimit
 		sqlGoSchema      SQLGoSchema
 		sqlGoParameter   SQLGoParameter
@@ -104,6 +109,7 @@ func NewSQLGo() SQLGo {
 		sqlGoFrom:        NewSQLGoFrom(),
 		sqlGoJoin:        NewSQLGoJoin(),
 		sqlGoWhere:       NewSQLGoWhere(),
+		sqlGoOrder:       NewSQLGoOrder(),
 		sqlGoOffsetLimit: NewSQLGoOffsetLimit(),
 		sqlGoSchema:      NewSQLGoSchema(),
 		sqlGoParameter:   NewSQLGoParameter(),
@@ -147,6 +153,11 @@ func (s *sqlGo) SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo {
 
 func (s *sqlGo) SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo {
 	s.sqlGoWhere = sqlGoWhere
+	return s
+}
+
+func (s *sqlGo) SetSQLGoOrder(sqlGoOrder SQLGoOrder) SQLGo {
+	s.sqlGoOrder = sqlGoOrder
 	return s
 }
 
@@ -289,6 +300,16 @@ func (s *sqlGo) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQ
 	return s
 }
 
+func (s *sqlGo) SQLOrder(values ...sqlGoOrderValue) SQLGo {
+	s.sqlGoOrder.SQLOrder(values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLOrder(value sqlGoValue, order string) SQLGo {
+	s.sqlGoOrder.SetSQLOrder(value, order)
+	return s
+}
+
 func (s *sqlGo) SQLOffsetLimit(offset int, limit int) SQLGo {
 	s.sqlGoOffsetLimit.SQLOffsetLimit(offset, limit)
 	return s
@@ -367,6 +388,10 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = combineSQL(sql, s.sqlGoValues.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
+
+	s.sqlGoOrder.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = combineSQL(sql, s.sqlGoOrder.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoOrder.GetSQLGoParameter())
 
 	s.sqlGoOffsetLimit.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = combineSQL(sql, s.sqlGoOffsetLimit.BuildSQL())
