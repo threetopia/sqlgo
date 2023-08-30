@@ -54,6 +54,18 @@ func NewSQLGoWhere() SQLGoWhere {
 	return new(sqlGoWhere)
 }
 
+func MakeSqlGoWhereValueSlice(values ...sqlGoWhereValue) sqlGoWhereValueSlice {
+	var sqlValues sqlGoWhereValueSlice
+	for _, value := range values {
+		sqlValues = append(sqlValues, value)
+	}
+	return sqlValues
+}
+
+func (s *sqlGoWhereValueSlice) Append(sql sqlGoWhereValue) {
+	*s = append(*s, sql)
+}
+
 func SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {
 	return sqlGoWhereValue{
 		whereType:   whereType,
