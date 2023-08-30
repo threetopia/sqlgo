@@ -224,6 +224,8 @@ func TestWhereGroupPipeline(t *testing.T) {
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != whereGroupQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereGroupQuery, sqlStr)
+	} else {
+		t.Log(sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
