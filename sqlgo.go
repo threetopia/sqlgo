@@ -1,7 +1,5 @@
 package sqlgo
 
-import "fmt"
-
 const (
 	Dialect           sqlGoDialect = "dialect"
 	MySQLDialect      sqlGoDialect = "mysql-" + Dialect
@@ -398,13 +396,4 @@ func (s *sqlGo) BuildSQL() string {
 	s.SetSQLGoParameter(s.sqlGoOffsetLimit.GetSQLGoParameter())
 
 	return sql
-}
-
-func combineSQL(firstSQL string, secondSQL string) string {
-	if secondSQL == "" {
-		return firstSQL
-	} else if firstSQL != "" {
-		firstSQL = fmt.Sprintf("%s ", firstSQL)
-	}
-	return fmt.Sprintf("%s%s", firstSQL, secondSQL)
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1) ORDER BY columnOne ASC, columnTwo DESC"
+const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1) AND t.column_two=$2 AND t.column_three=$3 ORDER BY columnOne ASC, columnTwo DESC"
 
 func TestSelectQueryPrepend(t *testing.T) {
 	sql := NewSQLGo().
@@ -22,6 +22,8 @@ func TestSelectQueryPrepend(t *testing.T) {
 		).
 		SQLWhere(
 			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
+			SetSQLWhere("AND", "t.column_two", "=", float64(0)),
+			SetSQLWhere("AND", "t.column_three", "=", 0),
 		).
 		SQLOrder(SetSQLOrder("columnOne", "ASC"), SetSQLOrder("columnTwo", "DESC"))
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
@@ -41,6 +43,8 @@ func TestSelectQueryPipeline(t *testing.T) {
 		SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
 		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")).
 		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}).
+		SetSQLWhere("AND", "t.column_two", "=", float64(0)).
+		SetSQLWhere("AND", "t.column_three", "=", 0).
 		SetSQLOrder("columnOne", "ASC").
 		SetSQLOrder("columnTwo", "DESC")
 	if sqlStr := sql.BuildSQL(); sqlStr != selectQuery {
@@ -60,7 +64,10 @@ func TestSelectQuerySetByVariable(t *testing.T) {
 	sqlFrom := NewSQLGoFrom().SQLFrom("table", "t")
 	sqlJoin := NewSQLGoJoin().SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
 		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id"))
-	sqlWhere := NewSQLGoWhere().SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3})
+	sqlWhere := NewSQLGoWhere().
+		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}).
+		SetSQLWhere("AND", "t.column_two", "=", float64(0)).
+		SetSQLWhere("AND", "t.column_three", "=", 0)
 	sqlOrder := NewSQLGoOrder().SetSQLOrder("columnOne", "ASC").SetSQLOrder("columnTwo", "DESC")
 	sql.SetSQLGoSchema(sqlSchema).
 		SetSQLGoSelect(sqlSelect).

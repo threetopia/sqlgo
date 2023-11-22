@@ -1,9 +1,6 @@
 package sqlgo
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 )
 
@@ -32,7 +29,7 @@ func (s *sqlGoParameter) SetSQLParameter(value interface{}) SQLGoParameter {
 		return s
 	}
 
-	hashVal := hash(value)
+	hashVal := hash(value, fmt.Sprintf("%T", value))
 	if s.parameterMap == nil {
 		s.parameterMap = make(map[interface{}]int)
 	} else if _, ok := s.parameterMap[hashVal]; ok {
@@ -45,7 +42,7 @@ func (s *sqlGoParameter) SetSQLParameter(value interface{}) SQLGoParameter {
 }
 
 func (s *sqlGoParameter) GetSQLParameterCount(value interface{}) int {
-	hashVal := hash(value)
+	hashVal := hash(value, fmt.Sprintf("%T", value))
 	if count, ok := s.parameterMap[hashVal]; ok {
 		return count
 	}
@@ -58,12 +55,4 @@ func (s *sqlGoParameter) GetSQLParameterSign(value interface{}) string {
 
 func (s *sqlGoParameter) GetSQLParameter() []interface{} {
 	return s.parameterList
-}
-
-func hash(i interface{}) string {
-	jVal, _ := json.Marshal(i)
-	h := sha1.New()
-	h.Write(jVal)
-	bs := h.Sum(nil)
-	return hex.EncodeToString(bs)
 }
