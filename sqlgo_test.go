@@ -236,3 +236,32 @@ func TestWhereGroupPipeline(t *testing.T) {
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
+
+const whereBetween string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE (t.column_one ILIKE ANY ($1)) OR (t.column_three=$2 AND (t.column_two BETWEEN $3 AND $4))"
+
+func TestBetween(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SQLSelect(
+			SetSQLSelect("t.column_one", "columnOne"),
+			SetSQLSelect("t.column_two", "columnTwo"),
+			SetSQLSelect("t.column_three", "columnThree"),
+			SetSQLSelect("t.column_no_alias", ""),
+		).
+		SQLFrom("table", "t").
+		SQLJoin(
+			SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")),
+			SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")),
+		).
+		SQLWhere(
+			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
+		).
+		SQLWhereGroup("OR",
+			SetSQLWhere("AND", "t.column_three", "=", 3),
+			SetSQLWhereBetween("AND", "t.column_two", 100000, 2000000),
+		)
+	if sqlStr := sql.BuildSQL(); sqlStr != whereBetween {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", whereGroupQuery, sqlStr)
+	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
+}

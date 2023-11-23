@@ -37,6 +37,11 @@ type (
 		whereType  string
 	}
 
+	sqlGoWhereBetween struct {
+		firstVal  interface{}
+		secondVal interface{}
+	}
+
 	sqlGoWhereGroupValueSlice []sqlGoWhereGroupValue
 	sqlGoWhereValueSlice      []sqlGoWhereValue
 )
@@ -64,6 +69,16 @@ func SetSQLWhere(whereType string, whereColumn string, operator string, value in
 		whereColumn: whereColumn,
 		operator:    operator,
 		value:       value,
+		isParam:     true,
+	}
+}
+
+func SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) sqlGoWhereValue {
+	return sqlGoWhereValue{
+		whereType:   whereType,
+		whereColumn: whereColumn,
+		operator:    "BETWEEN",
+		value:       sqlGoWhereBetween{firstVal: firstVal, secondVal: secondVal},
 		isParam:     true,
 	}
 }
@@ -97,6 +112,21 @@ func (s *sqlGoWhere) SQLWhere(valueSlice ...sqlGoWhereValue) SQLGoWhere {
 }
 
 func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere {
+	if len(s.groupValue) > 0 {
+		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhere(whereType, whereColumn, operator, value))
+	} else {
+		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
+		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{
+			whereType:  "AND",
+			valueSlice: append(make(sqlGoWhereValueSlice, 0), SetSQLWhere(whereType, whereColumn, operator, value)),
+		})
+	}
+	return s
+}
+
+func (s *sqlGoWhere) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGoWhere {
+	operator := "BETWEEN"
+	value := sqlGoWhereBetween{firstVal: firstVal, secondVal: secondVal}
 	if len(s.groupValue) > 0 {
 		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhere(whereType, whereColumn, operator, value))
 	} else {
@@ -155,6 +185,8 @@ func (s *sqlGoWhere) BuildSQL() string {
 				vType.SetSQLGoParameter(s.GetSQLGoParameter())
 				sqlVal = fmt.Sprintf("%s%s%s(%s)", sqlVal, v.whereColumn, v.operator, vType.BuildSQL())
 				s.SetSQLGoParameter(vType.GetSQLGoParameter())
+			case sqlGoWhereBetween:
+				sqlVal = buildWhereBetween(s, sqlVal, operator, v, vType)
 			case []string:
 				sqlVal = buildWhereSlice(s, sqlVal, operator, v, vType)
 			case []int:
@@ -183,6 +215,15 @@ func (s *sqlGoWhere) BuildSQL() string {
 	}
 
 	return sql
+}
+
+func buildWhereBetween(s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType sqlGoWhereBetween) string {
+	s.GetSQLGoParameter().SetSQLParameter(vType.firstVal)
+	firstParamSign := s.GetSQLGoParameter().GetSQLParameterSign(vType.firstVal)
+	s.GetSQLGoParameter().SetSQLParameter(vType.secondVal)
+	secondParamSign := s.GetSQLGoParameter().GetSQLParameterSign(vType.secondVal)
+
+	return fmt.Sprintf("%s(%s %s %s AND %s)", sql, v.whereColumn, v.operator, firstParamSign, secondParamSign)
 }
 
 func buildWhereSlice[V string | int | int64 | float32 | float64](s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType []V) string {
