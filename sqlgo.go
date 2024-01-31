@@ -6,7 +6,7 @@ const (
 	PostgreSQLDialect sqlGoDialect = "postgresql-" + Dialect
 )
 
-type SQLGoMandatory interface {
+type SQLGoBase interface {
 	GetSQLGoParameter() SQLGoParameter
 	BuildSQL() string
 }
@@ -72,7 +72,7 @@ type SQLGo interface {
 	SetSQLSchema(schema string) SQLGo
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGo
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

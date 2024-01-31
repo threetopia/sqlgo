@@ -8,7 +8,7 @@ type SQLGoDelete interface {
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoDelete
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoDelete
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type sqlGoDelete struct {

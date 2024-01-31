@@ -11,7 +11,7 @@ type SQLGoJoin interface {
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoJoin
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoJoin
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

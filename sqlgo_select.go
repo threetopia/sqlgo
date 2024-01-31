@@ -7,7 +7,7 @@ type SQLGoSelect interface {
 	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGoSelect
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

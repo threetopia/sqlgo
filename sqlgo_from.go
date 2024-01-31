@@ -9,7 +9,7 @@ type SQLGoFrom interface {
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoFrom
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoFrom
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

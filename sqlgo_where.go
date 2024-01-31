@@ -16,7 +16,7 @@ type SQLGoWhere interface {
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

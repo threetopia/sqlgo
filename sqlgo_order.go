@@ -9,7 +9,7 @@ type SQLGoOrder interface {
 	SetSQLOrder(value sqlGoValue, order string) SQLGoOrder
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoOrder
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

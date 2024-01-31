@@ -10,7 +10,7 @@ type SQLGoUpdate interface {
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoUpdate
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

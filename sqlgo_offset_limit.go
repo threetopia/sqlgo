@@ -10,7 +10,7 @@ type SQLGoOffsetLimit interface {
 	SetSQLPage(page int) SQLGoOffsetLimit
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoOffsetLimit
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type sqlGoOffsetLimit struct {

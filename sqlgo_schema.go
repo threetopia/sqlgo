@@ -7,7 +7,7 @@ type SQLGoSchema interface {
 	SetSQLSchema(schema string) SQLGoSchema
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSchema
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type sqlGoSchema struct {

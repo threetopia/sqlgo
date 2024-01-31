@@ -7,7 +7,7 @@ type SQLGoValues interface {
 	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGoValues
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoValues
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (

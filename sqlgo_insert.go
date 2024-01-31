@@ -11,7 +11,7 @@ type SQLGoInsert interface {
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoInsert
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoInsert
-	SQLGoMandatory
+	SQLGoBase
 }
 
 type (
