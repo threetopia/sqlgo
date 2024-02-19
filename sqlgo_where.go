@@ -126,15 +126,13 @@ func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator 
 }
 
 func (s *sqlGoWhere) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGoWhere {
-	operator := "BETWEEN"
-	value := sqlGoWhereBetween{firstVal: firstVal, secondVal: secondVal}
 	if len(s.groupValue) > 0 {
-		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhere(whereType, whereColumn, operator, value))
+		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal))
 	} else {
 		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
 		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{
 			whereType:  "AND",
-			valueSlice: append(make(sqlGoWhereValueSlice, 0), SetSQLWhere(whereType, whereColumn, operator, value)),
+			valueSlice: append(make(sqlGoWhereValueSlice, 0), SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal)),
 		})
 	}
 	return s
