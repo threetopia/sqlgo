@@ -56,6 +56,7 @@ type SQLGo interface {
 
 	SQLWhere(values ...sqlGoWhereValue) SQLGo
 	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
+	SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGo
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 
@@ -285,6 +286,11 @@ func (s *sqlGo) SQLWhere(values ...sqlGoWhereValue) SQLGo {
 
 func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo {
 	s.sqlGoWhere.SetSQLWhere(whereType, whereColumn, operator, value)
+	return s
+}
+
+func (s *sqlGo) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGo {
+	s.sqlGoWhere.SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal)
 	return s
 }
 
