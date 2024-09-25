@@ -20,6 +20,7 @@ type SQLGOModuleSetter interface {
 	SetSQLGoFrom(sqlGoFrom SQLGoFrom) SQLGo
 	SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo
 	SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo
+	SetSQLGoGroupBy(sqlGoGroupBy SQLGoGroupBy) SQLGo
 	SetSQLGoOrder(sqlGoOrder SQLGoOrder) SQLGo
 	SetSQLGoOffsetLimit(sqlGoOffsetLimit SQLGoOffsetLimit) SQLGo
 	SetSQLGoSchema(sqlGoSchema SQLGoSchema) SQLGo
@@ -60,6 +61,9 @@ type SQLGo interface {
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 
+	SQLGroupBy(values ...sqlGoGroupByValue) SQLGo
+	SetSQLGroupBy(value sqlGoGroupByValue) SQLGo
+
 	SQLOrder(values ...sqlGoOrderValue) SQLGo
 	SetSQLOrder(value sqlGoValue, order string) SQLGo
 
@@ -86,6 +90,7 @@ type (
 		sqlGoFrom        SQLGoFrom
 		sqlGoJoin        SQLGoJoin
 		sqlGoWhere       SQLGoWhere
+		sqlGoGroupBy     SQLGoGroupBy
 		sqlGoOrder       SQLGoOrder
 		sqlGoOffsetLimit SQLGoOffsetLimit
 		sqlGoSchema      SQLGoSchema
@@ -108,6 +113,7 @@ func NewSQLGo() SQLGo {
 		sqlGoFrom:        NewSQLGoFrom(),
 		sqlGoJoin:        NewSQLGoJoin(),
 		sqlGoWhere:       NewSQLGoWhere(),
+		sqlGoGroupBy:     NewSQLGoGroupBy(),
 		sqlGoOrder:       NewSQLGoOrder(),
 		sqlGoOffsetLimit: NewSQLGoOffsetLimit(),
 		sqlGoSchema:      NewSQLGoSchema(),
@@ -152,6 +158,11 @@ func (s *sqlGo) SetSQLGoJoin(sqlGoJoin SQLGoJoin) SQLGo {
 
 func (s *sqlGo) SetSQLGoWhere(sqlGoWhere SQLGoWhere) SQLGo {
 	s.sqlGoWhere = sqlGoWhere
+	return s
+}
+
+func (s *sqlGo) SetSQLGoGroupBy(sqlGoGroupBy SQLGoGroupBy) SQLGo {
+	s.sqlGoGroupBy = sqlGoGroupBy
 	return s
 }
 
@@ -304,6 +315,16 @@ func (s *sqlGo) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQ
 	return s
 }
 
+func (s *sqlGo) SQLGroupBy(values ...sqlGoGroupByValue) SQLGo {
+	s.sqlGoGroupBy.SQLGroupBy(values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLGroupBy(value sqlGoGroupByValue) SQLGo {
+	s.sqlGoGroupBy.SQLGroupBy(value)
+	return s
+}
+
 func (s *sqlGo) SQLOrder(values ...sqlGoOrderValue) SQLGo {
 	s.sqlGoOrder.SQLOrder(values...)
 	return s
@@ -392,6 +413,10 @@ func (s *sqlGo) BuildSQL() string {
 	s.sqlGoValues.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = combineSQL(sql, s.sqlGoValues.BuildSQL())
 	s.SetSQLGoParameter(s.sqlGoValues.GetSQLGoParameter())
+
+	s.sqlGoGroupBy.SetSQLGoParameter(s.GetSQLGoParameter())
+	sql = combineSQL(sql, s.sqlGoGroupBy.BuildSQL())
+	s.SetSQLGoParameter(s.sqlGoGroupBy.GetSQLGoParameter())
 
 	s.sqlGoOrder.SetSQLGoParameter(s.GetSQLGoParameter())
 	sql = combineSQL(sql, s.sqlGoOrder.BuildSQL())

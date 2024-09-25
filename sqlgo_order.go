@@ -77,6 +77,5 @@ func (s *sqlGoOrder) BuildSQL() string {
 			sql = fmt.Sprintf("%s%s %s", sql, v.value, v.order)
 		}
 	}
-
 	return sql
 }

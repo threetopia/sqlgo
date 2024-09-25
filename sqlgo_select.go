@@ -12,7 +12,7 @@ type SQLGoSelect interface {
 
 type (
 	sqlGoSelect struct {
-		values         []sqlGoSelectValue
+		values         sqlGoSelectValues
 		sqlGoParameter SQLGoParameter
 	}
 
@@ -20,6 +20,7 @@ type (
 		alias sqlGoAlias
 		value sqlGoValue
 	}
+	sqlGoSelectValues []sqlGoSelectValue
 )
 
 func NewSQLGoSelect() SQLGoSelect {
