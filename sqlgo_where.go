@@ -242,7 +242,7 @@ func buildWhereSlice[V string | int | int64 | float32 | float64](s SQLGoWhere, s
 	}
 	vType = cleanVType
 
-	if operator == "IN" {
+	if operator == "IN" || operator == "NOT IN" {
 		sql = fmt.Sprintf("%s%s%s(", sql, v.whereColumn, v.operator)
 		for iIn, vIn := range vType {
 			if iIn > 0 {
