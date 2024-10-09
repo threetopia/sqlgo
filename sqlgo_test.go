@@ -107,12 +107,6 @@ func TestDeleteQueryPipeline(t *testing.T) {
 const insertQuery string = "INSERT INTO table (col1, col2, col3) VALUES ($1, $2, $3), ($1, $2, $3), ($1, $2, $3)"
 
 func TestInsert(t *testing.T) {
-	// sql := NewSQLGo().
-	// 	SQLInsert("table", SetSQLInsertColumn("col1", "col2", "col3"),
-	// 		SetSQLInsertValue("val1", "val2", "val3"),
-	// 		SetSQLInsertValue("val1", "val2", "val3"),
-	// 		SetSQLInsertValue("val1", "val2", "val3"),
-	// 	)
 	sql := NewSQLGo().
 		SetSQLInsert("table").
 		SetSQLInsertColumn("col1", "col2", "col3").
@@ -189,7 +183,7 @@ func TestUpdate(t *testing.T) {
 // 	fmt.Println(sql.BuildSQL(), sql.GetSQLGoParameter().GetSQLParameter())
 // }
 
-const whereGroupQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE (t.column_two=$2 AND t.column_three=$3) OR (t.column_one ILIKE ANY ($1))"
+const whereGroupQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE (t.column_two=$1 AND t.column_three=$2) AND t.column_one ILIKE ANY ($3)"
 
 func TestWhereGroupQueryPrepend(t *testing.T) {
 	sql := NewSQLGo().
@@ -241,7 +235,7 @@ func TestWhereGroupPipeline(t *testing.T) {
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
-const whereBetween string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE (t.column_one ILIKE ANY ($1)) OR (t.column_three=$2 AND (t.column_two BETWEEN $3 AND $4))"
+const whereBetween string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1) OR (t.column_three=$2 AND (t.column_two BETWEEN $3 AND $4))"
 
 func TestBetween(t *testing.T) {
 	sql := NewSQLGo().
@@ -265,7 +259,7 @@ func TestBetween(t *testing.T) {
 			SetSQLWhereBetween("AND", "t.column_two", 100000, 2000000),
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != whereBetween {
-		t.Errorf("result must be (%s) BuildSQL give (%s)", whereGroupQuery, sqlStr)
+		t.Errorf("result must be (%s) BuildSQL give (%s)", whereBetween, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }

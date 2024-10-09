@@ -21,7 +21,8 @@ type SQLGoWhere interface {
 
 type (
 	sqlGoWhere struct {
-		groupValue     sqlGoWhereGroupValueSlice
+		values sqlGoWhereValueSlice
+		// groupValues    sqlGoWhereGroupValueSlice
 		sqlGOParameter SQLGoParameter
 	}
 
@@ -32,19 +33,12 @@ type (
 		value       interface{}
 		isParam     bool
 	}
-
-	sqlGoWhereGroupValue struct {
-		valueSlice sqlGoWhereValueSlice
-		whereType  string
-	}
+	sqlGoWhereValueSlice []sqlGoWhereValue
 
 	sqlGoWhereBetween struct {
 		firstVal  interface{}
 		secondVal interface{}
 	}
-
-	sqlGoWhereGroupValueSlice []sqlGoWhereGroupValue
-	sqlGoWhereValueSlice      []sqlGoWhereValue
 )
 
 var specialOperator = map[string]string{
@@ -77,6 +71,13 @@ func SetSQLWhere(whereType string, whereColumn string, operator string, value in
 	}
 }
 
+func SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) sqlGoWhereValue {
+	return sqlGoWhereValue{
+		whereType: whereType,
+		value:     SetSQLWheres(values...),
+	}
+}
+
 func SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) sqlGoWhereValue {
 	return sqlGoWhereValue{
 		whereType:   whereType,
@@ -105,52 +106,28 @@ func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, 
 	}
 }
 
-func (s *sqlGoWhere) SQLWhere(valueSlice ...sqlGoWhereValue) SQLGoWhere {
-	if len(s.groupValue) > 0 {
-		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, valueSlice...)
-	} else {
-		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
-		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{whereType: "AND", valueSlice: valueSlice})
-	}
+func (s *sqlGoWhere) SQLWhere(values ...sqlGoWhereValue) SQLGoWhere {
+	s.values = append(s.values, values...)
 	return s
 }
 
 func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere {
-	if len(s.groupValue) > 0 {
-		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhere(whereType, whereColumn, operator, value))
-	} else {
-		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
-		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{
-			whereType:  "AND",
-			valueSlice: append(make(sqlGoWhereValueSlice, 0), SetSQLWhere(whereType, whereColumn, operator, value)),
-		})
-	}
+	s.values = append(s.values, SetSQLWhere(whereType, whereColumn, operator, value))
 	return s
 }
 
 func (s *sqlGoWhere) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGoWhere {
-	if len(s.groupValue) > 0 {
-		s.groupValue[0].valueSlice = append(s.groupValue[0].valueSlice, SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal))
-	} else {
-		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
-		s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{
-			whereType:  "AND",
-			valueSlice: append(make(sqlGoWhereValueSlice, 0), SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal)),
-		})
-	}
+	s.values = append(s.values, SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal))
 	return s
 }
 
-func (s *sqlGoWhere) SQLWhereGroup(whereType string, valueSlice ...sqlGoWhereValue) SQLGoWhere {
-	if len(s.groupValue) < 1 {
-		s.groupValue = make(sqlGoWhereGroupValueSlice, 0)
-	}
-	s.groupValue = append(s.groupValue, sqlGoWhereGroupValue{whereType: whereType, valueSlice: valueSlice})
+func (s *sqlGoWhere) SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere {
+	s.values = append(s.values, SetSQLWhereGroup(whereType, values...))
 	return s
 }
 
-func (s *sqlGoWhere) SetSQLWhereGroup(whereType string, valueSlice ...sqlGoWhereValue) SQLGoWhere {
-	s.SQLWhereGroup(whereType, valueSlice...)
+func (s *sqlGoWhere) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere {
+	s.SQLWhereGroup(whereType, values...)
 	return s
 }
 
@@ -165,57 +142,53 @@ func (s *sqlGoWhere) GetSQLGoParameter() SQLGoParameter {
 
 func (s *sqlGoWhere) BuildSQL() string {
 	var sql string
-	if len(s.groupValue) < 1 {
+	if len(s.values) < 1 {
 		return sql
 	}
 
 	sql = "WHERE "
-	for ig, vg := range s.groupValue {
-		var sqlVal string
-		for i, v := range vg.valueSlice {
-			if i > 0 {
-				sqlVal = fmt.Sprintf("%s %s ", sqlVal, strings.ToUpper(v.whereType))
-			}
+	sql = fmt.Sprintf("%s%s", sql, buildWhereValues(s, s.values))
 
-			operator := strings.ToUpper(v.operator)
-			if vo, ok := specialOperator[operator]; ok {
-				v.operator = vo
-			}
+	return sql
+}
 
-			switch vType := v.value.(type) {
-			case SQLGo:
-				vType.SetSQLGoParameter(s.GetSQLGoParameter())
-				sqlVal = fmt.Sprintf("%s%s%s(%s)", sqlVal, v.whereColumn, v.operator, vType.BuildSQL())
-				s.SetSQLGoParameter(vType.GetSQLGoParameter())
-			case sqlGoWhereBetween:
-				sqlVal = buildWhereBetween(s, sqlVal, operator, v, vType)
-			case []string:
-				sqlVal = buildWhereSlice(s, sqlVal, operator, v, vType)
-			case []int:
-				sqlVal = buildWhereSlice(s, sqlVal, operator, v, vType)
-			case []int64:
-				sqlVal = buildWhereSlice(s, sqlVal, operator, v, vType)
-			case []float64:
-				sqlVal = buildWhereSlice(s, sqlVal, operator, v, vType)
-			default:
-				if !v.isParam {
-					sqlVal = fmt.Sprintf("%s%s%s%s", sqlVal, v.whereColumn, v.operator, vType)
-				} else {
-					s.sqlGOParameter.SetSQLParameter(vType)
-					sqlVal = fmt.Sprintf("%s%s%s%s", sqlVal, v.whereColumn, v.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType))
-				}
-			}
+func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
+	var sql string
+	for i, v := range values {
+		if i > 0 {
+			sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(v.whereType))
 		}
-		if len(s.groupValue) > 1 {
-			if ig > 0 {
-				sql = fmt.Sprintf("%s %s ", sql, strings.ToUpper(vg.whereType))
+
+		operator := strings.ToUpper(v.operator)
+		if vo, ok := specialOperator[operator]; ok {
+			v.operator = vo
+		}
+		switch vType := v.value.(type) {
+		case SQLGo:
+			vType.SetSQLGoParameter(s.GetSQLGoParameter())
+			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.BuildSQL())
+			s.SetSQLGoParameter(vType.GetSQLGoParameter())
+		case sqlGoWhereBetween:
+			sql = buildWhereBetween(s, sql, operator, v, vType)
+		case sqlGoWhereValueSlice:
+			sql = fmt.Sprintf("%s(%s)", sql, buildWhereValues(s, vType))
+		case []string:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []int:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []int64:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []float64:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
+		default:
+			if !v.isParam {
+				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, vType)
+			} else {
+				s.GetSQLGoParameter().SetSQLParameter(vType)
+				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType))
 			}
-			sql = fmt.Sprintf("%s(%s)", sql, sqlVal)
-		} else {
-			sql = fmt.Sprintf("%s%s", sql, sqlVal)
 		}
 	}
-
 	return sql
 }
 
