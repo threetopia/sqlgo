@@ -169,7 +169,7 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.BuildSQL())
 			s.SetSQLGoParameter(vType.GetSQLGoParameter())
 		case sqlGoWhereBetween:
-			sql = buildWhereBetween(s, sql, operator, v, vType)
+			sql = buildWhereBetween(s, sql, v, vType)
 		case sqlGoWhereValueSlice:
 			sql = fmt.Sprintf("%s(%s)", sql, buildWhereValues(s, vType))
 		case []string:
@@ -192,7 +192,7 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 	return sql
 }
 
-func buildWhereBetween(s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType sqlGoWhereBetween) string {
+func buildWhereBetween(s SQLGoWhere, sql string, v sqlGoWhereValue, vType sqlGoWhereBetween) string {
 	s.GetSQLGoParameter().SetSQLParameter(vType.firstVal)
 	firstParamSign := s.GetSQLGoParameter().GetSQLParameterSign(vType.firstVal)
 	s.GetSQLGoParameter().SetSQLParameter(vType.secondVal)
