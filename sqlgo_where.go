@@ -52,8 +52,11 @@ var specialOperator = map[string]string{
 	"ILIKE ANY": " ILIKE ANY ",
 	"LIKE ANY":  " LIKE ANY ",
 	"IN":        " IN ",
+	"NOT IN":    " NOT IN ",
 	"LIKE":      " LIKE ",
+	"NOT LIKE":  " NOT LIKE ",
 	"ILIKE":     " ILIKE ",
+	"NOT ILIKE": " NOT ILIKE ",
 }
 
 func NewSQLGoWhere() SQLGoWhere {
