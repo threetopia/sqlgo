@@ -176,9 +176,15 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []int:
 			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []int32:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []int64:
 			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []float32:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []float64:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []bool:
 			sql = buildWhereSlice(s, sql, operator, v, vType)
 		default:
 			if !v.isParam {
@@ -201,7 +207,7 @@ func buildWhereBetween(s SQLGoWhere, sql string, v sqlGoWhereValue, vType sqlGoW
 	return fmt.Sprintf("%s(%s %s %s AND %s)", sql, v.whereColumn, v.operator, firstParamSign, secondParamSign)
 }
 
-func buildWhereSlice[V string | int | int64 | float32 | float64](s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType []V) string {
+func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool](s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType []V) string {
 	loadedValue := make(map[V]bool)
 	cleanVType := make([]V, 0)
 	for _, vAny := range vType {
