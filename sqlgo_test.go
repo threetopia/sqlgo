@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1) AND t.column_two=$2 AND t.column_three=$3 GROUP BY columnOne ORDER BY columnOne ASC, columnTwo DESC"
+const selectQuery string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE t.column_one ILIKE ANY ($1) AND t.column_two=$2 AND t.column_three=$3 AND t.column_four IN ($4, $5) GROUP BY columnOne ORDER BY columnOne ASC, columnTwo DESC"
 
 func TestSelectQueryPrepend(t *testing.T) {
 	sql := NewSQLGo().
@@ -24,6 +24,7 @@ func TestSelectQueryPrepend(t *testing.T) {
 			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
 			SetSQLWhere("AND", "t.column_two", "=", float64(0)),
 			SetSQLWhere("AND", "t.column_three", "=", 0),
+			SetSQLWhere("AND", "t.column_four", "IN", []bool{true, false}),
 		).
 		SQLGroupBy("columnOne").
 		SQLOrder(SetSQLOrder("columnOne", "ASC"), SetSQLOrder("columnTwo", "DESC"))
@@ -46,6 +47,7 @@ func TestSelectQueryPipeline(t *testing.T) {
 		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}).
 		SetSQLWhere("AND", "t.column_two", "=", float64(0)).
 		SetSQLWhere("AND", "t.column_three", "=", 0).
+		SetSQLWhere("AND", "t.column_four", "IN", []bool{true, false}).
 		SetSQLGroupBy("columnOne").
 		SetSQLOrder("columnOne", "ASC").
 		SetSQLOrder("columnTwo", "DESC")
@@ -69,7 +71,8 @@ func TestSelectQuerySetByVariable(t *testing.T) {
 	sqlWhere := NewSQLGoWhere().
 		SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}).
 		SetSQLWhere("AND", "t.column_two", "=", float64(0)).
-		SetSQLWhere("AND", "t.column_three", "=", 0)
+		SetSQLWhere("AND", "t.column_three", "=", 0).
+		SetSQLWhere("AND", "t.column_four", "IN", []bool{true, false})
 	sqlGroupBy := NewSQLGoGroupBy().SetSQLGroupBy("columnOne")
 	sqlOrder := NewSQLGoOrder().SetSQLOrder("columnOne", "ASC").SetSQLOrder("columnTwo", "DESC")
 	sql.SetSQLGoSchema(sqlSchema).

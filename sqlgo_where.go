@@ -229,7 +229,7 @@ func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool](
 			}
 
 			if !v.isParam {
-				sql = fmt.Sprintf("%s%x", sql, vIn)
+				sql = fmt.Sprintf("%s%v", sql, vIn)
 			} else {
 				s.GetSQLGoParameter().SetSQLParameter(vIn)
 				sql = fmt.Sprintf("%s%s", sql, s.GetSQLGoParameter().GetSQLParameterSign(vIn))
@@ -238,7 +238,7 @@ func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool](
 		sql = fmt.Sprintf("%s)", sql)
 	} else {
 		if !v.isParam {
-			sql = fmt.Sprintf("%s%s%s%x", sql, v.whereColumn, v.operator, vType)
+			sql = fmt.Sprintf("%s%s%s%v", sql, v.whereColumn, v.operator, vType)
 		} else {
 			var paramSign string
 			if reflect.TypeOf(vType).Kind() == reflect.Slice {
