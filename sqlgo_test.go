@@ -286,7 +286,7 @@ func TestToTsQuery(t *testing.T) {
 		).
 		SQLWhereGroup("OR",
 			SetSQLWhere("AND", "t.column_three", "=", 3),
-			SetSQLWhereToTsQuery("AND", "t.column_two", "one | two | three"),
+			SetSQLWhereToTsQuery("AND", "t.column_two", MakeSQLWhereToTsQuery("|", "asd"), MakeSQLWhereToTsQuery("|", "qwewqe")),
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != whereBetween {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereBetween, sqlStr)

@@ -26,6 +26,9 @@ type (
 		value  interface{}
 	}
 	sqlGoUpdateValueSlice []sqlGoUpdateValue
+
+	sqlGoUpdateToTsVector struct {
+	}
 )
 
 func NewSQLGoUpdate() SQLGoUpdate {
