@@ -138,18 +138,25 @@ func TestInsertToTsVector(t *testing.T) {
 const updateQuery string = "UPDATE table SET col1=$1, col2=$2 WHERE col3=$3"
 
 func TestUpdate(t *testing.T) {
-	// sql := NewSQLGo().
-	// 	SQLUpdate("table",
-	// 		SetSQLUpdateValue("col1", "val1"),
-	// 		SetSQLUpdateValue("col2", "val2"),
-	// 	).
-	// 	SQLWhere(SetSQLWhere("AND", "col3", "=", "val3"))
 	sql := NewSQLGo().
 		SetSQLUpdate("table").
 		SetSQLUpdateValue("col1", "val1").
 		SetSQLUpdateValue("col2", "val2").
 		SetSQLWhere("AND", "col3", "=", "val3")
 	if sqlStr := sql.BuildSQL(); sqlStr != updateQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", updateQuery, sqlStr)
+	}
+}
+
+const updateToTsVectorQuery string = "UPDATE table SET col1=$1, col2=to_tsvector($2) WHERE col3=$3"
+
+func TestUpdateToTsVector(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLUpdate("table").
+		SetSQLUpdateValue("col1", "val1").
+		SetSQLUpdateValue("col2", SetSQLUpdateToTsVector("val2")).
+		SetSQLWhere("AND", "col3", "=", "val3")
+	if sqlStr := sql.BuildSQL(); sqlStr != updateToTsVectorQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", updateQuery, sqlStr)
 	}
 }
