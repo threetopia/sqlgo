@@ -121,6 +121,20 @@ func TestInsert(t *testing.T) {
 	}
 }
 
+const insertToTsVectorQuery string = "INSERT INTO table (col1, col2, col3) VALUES ($1, $2, $3), ($1, $2, $3), ($1, $2, to_tsvector($3))"
+
+func TestInsertToTsVector(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLInsert("table").
+		SetSQLInsertColumn("col1", "col2", "col3").
+		SetSQLInsertValue("val1", "val2", "val3").
+		SetSQLInsertValue("val1", "val2", "val3").
+		SetSQLInsertValue("val1", "val2", SetSQLInsertToTsVector("val3"))
+	if sqlStr := sql.BuildSQL(); sqlStr != insertToTsVectorQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", insertQuery, sqlStr)
+	}
+}
+
 const updateQuery string = "UPDATE table SET col1=$1, col2=$2 WHERE col3=$3"
 
 func TestUpdate(t *testing.T) {

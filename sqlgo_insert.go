@@ -1,6 +1,8 @@
 package sqlgo
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type SQLGoInsert interface {
 	SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert
@@ -27,6 +29,9 @@ type (
 	sqlGoInsertColumnSlice []sqlGoInsertColumn
 	sqlGoInsertValue       interface{}
 	sqlGoInsertValueSlice  []sqlGoInsertValue
+	sqlGoInsertToTsVector  struct {
+		value interface{}
+	}
 )
 
 func NewSQLGoInsert() SQLGoInsert {
@@ -39,6 +44,12 @@ func SetSQLInsertColumn(columns ...sqlGoInsertColumn) sqlGoInsertColumnSlice {
 
 func SetSQLInsertValue(values ...sqlGoInsertValue) sqlGoInsertValueSlice {
 	return values
+}
+
+func SetSQLInsertToTsVector(value sqlGoInsertValue) sqlGoInsertToTsVector {
+	return sqlGoInsertToTsVector{
+		value: value,
+	}
 }
 
 func (s *sqlGoInsert) SQLInsert(table sqlGoTable, columns sqlGoInsertColumnSlice, values ...sqlGoInsertValueSlice) SQLGoInsert {
@@ -111,8 +122,15 @@ func (s *sqlGoInsert) BuildSQL() string {
 			if iValue > 0 {
 				sql = fmt.Sprintf("%s, ", sql)
 			}
-			s.sqlGoParameter.SetSQLParameter(vValue)
-			sql = fmt.Sprintf("%s%s", sql, s.sqlGoParameter.GetSQLParameterSign(vValue))
+
+			switch vType := vValue.(type) {
+			case sqlGoInsertToTsVector:
+				s.sqlGoParameter.SetSQLParameter(vType.value)
+				sql = fmt.Sprintf("%sto_tsvector(%s)", sql, s.sqlGoParameter.GetSQLParameterSign(vType.value))
+			default:
+				s.sqlGoParameter.SetSQLParameter(vType)
+				sql = fmt.Sprintf("%s%s", sql, s.sqlGoParameter.GetSQLParameterSign(vType))
+			}
 		}
 		sql = fmt.Sprintf("%s)", sql)
 	}
