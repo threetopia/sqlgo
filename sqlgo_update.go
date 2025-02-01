@@ -1,6 +1,8 @@
 package sqlgo
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type SQLGoUpdate interface {
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate
@@ -28,6 +30,7 @@ type (
 	sqlGoUpdateValueSlice []sqlGoUpdateValue
 
 	sqlGoUpdateToTsVector struct {
+		value interface{}
 	}
 )
 
@@ -39,6 +42,12 @@ func SetSQLUpdateValue(column string, value interface{}) sqlGoUpdateValue {
 	return sqlGoUpdateValue{
 		column: column,
 		value:  value,
+	}
+}
+
+func SetSQLUpdateToTsVector(value interface{}) sqlGoUpdateToTsVector {
+	return sqlGoUpdateToTsVector{
+		value: value,
 	}
 }
 
@@ -88,8 +97,14 @@ func (s *sqlGoUpdate) BuildSQL() string {
 		if i > 0 {
 			sql = fmt.Sprintf("%s, ", sql)
 		}
-		s.sqlGoParameter.SetSQLParameter(v.value)
-		sql = fmt.Sprintf("%s%s=%s", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(v.value))
+		switch vType := v.value.(type) {
+		case sqlGoUpdateToTsVector:
+			s.sqlGoParameter.SetSQLParameter(vType)
+			sql = fmt.Sprintf("%s%s=%s", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(vType))
+		default:
+			s.sqlGoParameter.SetSQLParameter(vType)
+			sql = fmt.Sprintf("%s%s=%s", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(vType))
+		}
 	}
 	return sql
 }
