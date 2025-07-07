@@ -100,16 +100,11 @@ type (
 		sqlGoParameter   SQLGoParameter
 	}
 
-	sqlGoAlias         string
-	sqlGoColumn        string
-	sqlGoDialect       string
-	sqlGoTable         interface{}
-	sqlGoValue         interface{}
-	sqlGoTsVectorValue struct {
-		operator string
-		value    sqlGoValue
-	}
-	sqlGoTsVectorValues []sqlGoTsVectorValue
+	sqlGoAlias   string
+	sqlGoColumn  string
+	sqlGoDialect string
+	sqlGoTable   interface{}
+	sqlGoValue   interface{}
 )
 
 func NewSQLGo() SQLGo {
