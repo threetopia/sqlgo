@@ -36,14 +36,16 @@ type SQLGo interface {
 
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGo
 	SetSQLUpdate(table sqlGoTable) SQLGo
-	SetSQLUpdateValue(column string, value interface{}) SQLGo
+	SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQLGo
 	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo
+	SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGo
 
 	SQLDelete(table sqlGoTable, sqlWhere ...sqlGoWhereValue) SQLGo
 	SetSQLDelete(table sqlGoTable) SQLGo
 
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
-	SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo
+	SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGo
+	SetSQLSelectTsRank(column sqlGoColumn, operator string, value sqlGoValue, alias sqlGoAlias) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo
@@ -56,8 +58,9 @@ type SQLGo interface {
 	SetSQLJoin(joinType string, table sqlGoTable, alias sqlGoAlias, sqlWhere ...sqlGoWhereValue) SQLGo
 
 	SQLWhere(values ...sqlGoWhereValue) SQLGo
-	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo
-	SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGo
+	SetSQLWhere(whereType string, whereColumn string, operator string, value sqlGoValue) SQLGo
+	SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal sqlGoValue) SQLGo
+	SetSQLWhereToTsQuery(whereType, whereColumn, lang string, value sqlGoValue) SQLGo
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 
@@ -97,10 +100,11 @@ type (
 		sqlGoParameter   SQLGoParameter
 	}
 
-	sqlGoTable   interface{}
 	sqlGoAlias   string
-	sqlGoValue   interface{}
+	sqlGoColumn  string
 	sqlGoDialect string
+	sqlGoTable   interface{}
+	sqlGoValue   interface{}
 )
 
 func NewSQLGo() SQLGo {
@@ -224,13 +228,18 @@ func (s *sqlGo) SetSQLUpdate(table sqlGoTable) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLUpdateValue(column string, value interface{}) SQLGo {
+func (s *sqlGo) SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQLGo {
 	s.sqlGoUpdate.SetSQLUpdateValue(column, value)
 	return s
 }
 
 func (s *sqlGo) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo {
 	s.sqlGoUpdate.SetSQLUpdateValueSlice(values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdateToTsVector(column, operator, value)
 	return s
 }
 
@@ -250,8 +259,13 @@ func (s *sqlGo) SQLSelect(values ...sqlGoSelectValue) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLSelect(value interface{}, alias sqlGoAlias) SQLGo {
+func (s *sqlGo) SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGo {
 	s.sqlGoSelect.SetSQLSelect(value, alias)
+	return s
+}
+
+func (s *sqlGo) SetSQLSelectTsRank(column sqlGoColumn, operator string, value sqlGoValue, alias sqlGoAlias) SQLGo {
+	s.sqlGoSelect.SetSQLSelectTsRank(column, operator, value, alias)
 	return s
 }
 
@@ -295,13 +309,18 @@ func (s *sqlGo) SQLWhere(values ...sqlGoWhereValue) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGo {
+func (s *sqlGo) SetSQLWhere(whereType string, whereColumn string, operator string, value sqlGoValue) SQLGo {
 	s.sqlGoWhere.SetSQLWhere(whereType, whereColumn, operator, value)
 	return s
 }
 
-func (s *sqlGo) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGo {
+func (s *sqlGo) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal sqlGoValue) SQLGo {
 	s.sqlGoWhere.SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal)
+	return s
+}
+
+func (s *sqlGo) SetSQLWhereToTsQuery(whereType, whereColumn, lang string, value sqlGoValue) SQLGo {
+	s.sqlGoWhere.SetSQLWhereToTsQuery(whereType, whereColumn, lang, value)
 	return s
 }
 

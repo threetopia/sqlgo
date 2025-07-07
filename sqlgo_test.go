@@ -121,15 +121,23 @@ func TestInsert(t *testing.T) {
 	}
 }
 
+const insertToTsVectorQuery string = "INSERT INTO table (col1, col2, col3) VALUES ($1, $2, $3), ($1, $2, $3), ($1, $2, to_tsvector('english', $3))"
+
+func TestInsertToTsVector(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLInsert("table").
+		SetSQLInsertColumn("col1", "col2", "col3").
+		SetSQLInsertValue("val1", "val2", "val3").
+		SetSQLInsertValue("val1", "val2", "val3").
+		SetSQLInsertValue("val1", "val2", SetSQLInsertToTsVector("english", "val3"))
+	if sqlStr := sql.BuildSQL(); sqlStr != insertToTsVectorQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", insertToTsVectorQuery, sqlStr)
+	}
+}
+
 const updateQuery string = "UPDATE table SET col1=$1, col2=$2 WHERE col3=$3"
 
 func TestUpdate(t *testing.T) {
-	// sql := NewSQLGo().
-	// 	SQLUpdate("table",
-	// 		SetSQLUpdateValue("col1", "val1"),
-	// 		SetSQLUpdateValue("col2", "val2"),
-	// 	).
-	// 	SQLWhere(SetSQLWhere("AND", "col3", "=", "val3"))
 	sql := NewSQLGo().
 		SetSQLUpdate("table").
 		SetSQLUpdateValue("col1", "val1").
@@ -138,6 +146,36 @@ func TestUpdate(t *testing.T) {
 	if sqlStr := sql.BuildSQL(); sqlStr != updateQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", updateQuery, sqlStr)
 	}
+}
+
+const updateToTsVectorQuery string = "UPDATE schema.table SET col1=$1, val2=to_tsvector('english', $2) WHERE col3=$3"
+
+func TestUpdateToTsVector(t *testing.T) {
+	sql := NewSQLGo().
+		SetSQLSchema("schema").
+		SetSQLUpdate("table").
+		SetSQLUpdateValue("col1", "val1").
+		SetSQLUpdateToTsVector("val2", "english", "coalesce(title, '') || ' ' || coalesce(body, '')").
+		SetSQLWhere("AND", "col3", "=", "val3")
+	if sqlStr := sql.BuildSQL(); sqlStr != updateToTsVectorQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", updateQuery, sqlStr)
+	}
+}
+
+func TestUpdateToTsVectorPrepend(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SQLUpdate("table",
+			SetSQLUpdateValue("col1", "val1"),
+			SetSQLUpdateToTsVector("val2", "english", "coalesce(title, '') || ' ' || coalesce(body, '')"),
+		).
+		SQLWhere(
+			SetSQLWhere("AND", "col3", "=", "val3"),
+		)
+	if sqlStr := sql.BuildSQL(); sqlStr != updateToTsVectorQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", updateToTsVectorQuery, sqlStr)
+	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 // func TestWhereINClause(t *testing.T) {
@@ -263,6 +301,22 @@ func TestBetween(t *testing.T) {
 		)
 	if sqlStr := sql.BuildSQL(); sqlStr != whereBetween {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereBetween, sqlStr)
+	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
+}
+
+const whereTsQuery string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank"
+
+func TestToTsQuery(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SQLSelect(
+			SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank"),
+		).
+		SQLFrom("table", "t").
+		SQLWhere(SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software"))
+	if sqlStr := sql.BuildSQL(); sqlStr != whereTsQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQuery, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }

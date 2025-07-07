@@ -10,8 +10,9 @@ import (
 
 type SQLGoWhere interface {
 	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
-	SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere
-	SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGoWhere
+	SetSQLWhere(whereType, whereColumn, operator string, value sqlGoValue) SQLGoWhere
+	SetSQLWhereBetween(whereType, whereColumn string, firstVal, secondVal sqlGoValue) SQLGoWhere
+	SetSQLWhereToTsQuery(whereType, whereColumn, lang string, value sqlGoValue) SQLGoWhere
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
 
@@ -30,27 +31,33 @@ type (
 		whereType   string
 		whereColumn string
 		operator    string
-		value       interface{}
+		value       sqlGoValue
 		isParam     bool
 	}
 	sqlGoWhereValueSlice []sqlGoWhereValue
 
 	sqlGoWhereBetween struct {
-		firstVal  interface{}
-		secondVal interface{}
+		firstVal  sqlGoValue
+		secondVal sqlGoValue
+	}
+
+	sqlGoWhereToTsQuery struct {
+		lang  string
+		value sqlGoValue
 	}
 )
 
 var specialOperator = map[string]string{
-	"ANY":       "= ANY ",
-	"ILIKE ANY": " ILIKE ANY ",
-	"LIKE ANY":  " LIKE ANY ",
-	"IN":        " IN ",
-	"NOT IN":    " NOT IN ",
-	"LIKE":      " LIKE ",
-	"NOT LIKE":  " NOT LIKE ",
-	"ILIKE":     " ILIKE ",
-	"NOT ILIKE": " NOT ILIKE ",
+	"ANY":        "= ANY ",
+	"ILIKE ANY":  " ILIKE ANY ",
+	"LIKE ANY":   " LIKE ANY ",
+	"IN":         " IN ",
+	"NOT IN":     " NOT IN ",
+	"LIKE":       " LIKE ",
+	"NOT LIKE":   " NOT LIKE ",
+	"ILIKE":      " ILIKE ",
+	"NOT ILIKE":  " NOT ILIKE ",
+	"TO TSQUERY": " TO TSQUERY ",
 }
 
 func NewSQLGoWhere() SQLGoWhere {
@@ -61,7 +68,7 @@ func (s *sqlGoWhereValueSlice) Append(sql sqlGoWhereValue) {
 	*s = append(*s, sql)
 }
 
-func SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {
+func SetSQLWhere(whereType string, whereColumn string, operator string, value sqlGoValue) sqlGoWhereValue {
 	return sqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
@@ -78,13 +85,26 @@ func SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) sqlGoWhereVal
 	}
 }
 
-func SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) sqlGoWhereValue {
+func SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal sqlGoValue) sqlGoWhereValue {
 	return sqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
 		operator:    "BETWEEN",
 		value:       sqlGoWhereBetween{firstVal: firstVal, secondVal: secondVal},
 		isParam:     true,
+	}
+}
+
+func SetSQLWhereToTsQuery(whereType string, whereColumn string, lang string, value sqlGoValue) sqlGoWhereValue {
+	return sqlGoWhereValue{
+		whereType:   whereType,
+		whereColumn: whereColumn,
+		operator:    "TS QUERY",
+		value: sqlGoWhereToTsQuery{
+			lang:  lang,
+			value: value,
+		},
+		isParam: true,
 	}
 }
 
@@ -96,7 +116,7 @@ func SetSQLWheres(values ...sqlGoWhereValue) sqlGoWhereValueSlice {
 	return wheres
 }
 
-func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, value interface{}) sqlGoWhereValue {
+func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, value sqlGoValue) sqlGoWhereValue {
 	return sqlGoWhereValue{
 		whereType:   whereType,
 		whereColumn: whereColumn,
@@ -111,13 +131,18 @@ func (s *sqlGoWhere) SQLWhere(values ...sqlGoWhereValue) SQLGoWhere {
 	return s
 }
 
-func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value interface{}) SQLGoWhere {
+func (s *sqlGoWhere) SetSQLWhere(whereType string, whereColumn string, operator string, value sqlGoValue) SQLGoWhere {
 	s.values = append(s.values, SetSQLWhere(whereType, whereColumn, operator, value))
 	return s
 }
 
-func (s *sqlGoWhere) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal interface{}) SQLGoWhere {
+func (s *sqlGoWhere) SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal sqlGoValue) SQLGoWhere {
 	s.values = append(s.values, SetSQLWhereBetween(whereType, whereColumn, firstVal, secondVal))
+	return s
+}
+
+func (s *sqlGoWhere) SetSQLWhereToTsQuery(whereType string, whereColumn string, lang string, value sqlGoValue) SQLGoWhere {
+	s.values = append(s.values, SetSQLWhereToTsQuery(whereType, whereColumn, lang, value))
 	return s
 }
 
@@ -168,6 +193,9 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 			vType.SetSQLGoParameter(s.GetSQLGoParameter())
 			sql = fmt.Sprintf("%s%s%s(%s)", sql, v.whereColumn, v.operator, vType.BuildSQL())
 			s.SetSQLGoParameter(vType.GetSQLGoParameter())
+			s.SetSQLGoParameter(vType.GetSQLGoParameter())
+		case sqlGoWhereToTsQuery:
+			sql = buildWhereToTsQuery(s, sql, v, vType)
 		case sqlGoWhereBetween:
 			sql = buildWhereBetween(s, sql, v, vType)
 		case sqlGoWhereValueSlice:
@@ -198,6 +226,13 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 	return sql
 }
 
+func buildWhereToTsQuery(s SQLGoWhere, sql string, v sqlGoWhereValue, value sqlGoWhereToTsQuery) string {
+	var sqlVal string
+	s.GetSQLGoParameter().SetSQLParameter(sqlVal)
+	paramSign := s.GetSQLGoParameter().GetSQLParameterSign(sqlVal)
+	return fmt.Sprintf("%s%s @@ to_tsquery('%s', %s)", sql, v.whereColumn, value.lang, paramSign)
+}
+
 func buildWhereBetween(s SQLGoWhere, sql string, v sqlGoWhereValue, vType sqlGoWhereBetween) string {
 	s.GetSQLGoParameter().SetSQLParameter(vType.firstVal)
 	firstParamSign := s.GetSQLGoParameter().GetSQLParameterSign(vType.firstVal)
@@ -221,7 +256,10 @@ func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool](
 	}
 	vType = cleanVType
 
-	if operator == "IN" || operator == "NOT IN" {
+	switch operator {
+	case "TS VECTOR":
+
+	case "IN", "NOT IN":
 		sql = fmt.Sprintf("%s%s%s(", sql, v.whereColumn, v.operator)
 		for iIn, vIn := range vType {
 			if iIn > 0 {
@@ -236,7 +274,7 @@ func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool](
 			}
 		}
 		sql = fmt.Sprintf("%s)", sql)
-	} else {
+	default:
 		if !v.isParam {
 			sql = fmt.Sprintf("%s%s%s%v", sql, v.whereColumn, v.operator, vType)
 		} else {
