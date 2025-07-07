@@ -121,7 +121,7 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-const insertToTsVectorQuery string = "INSERT INTO table (col1, col2, col3) VALUES ($1, $2, $3), ($1, $2, $3), ($1, $2, to_tsvector($3))"
+const insertToTsVectorQuery string = "INSERT INTO table (col1, col2, col3) VALUES ($1, $2, $3), ($1, $2, $3), ($1, $2, to_tsvector('english', $3))"
 
 func TestInsertToTsVector(t *testing.T) {
 	sql := NewSQLGo().
@@ -129,9 +129,9 @@ func TestInsertToTsVector(t *testing.T) {
 		SetSQLInsertColumn("col1", "col2", "col3").
 		SetSQLInsertValue("val1", "val2", "val3").
 		SetSQLInsertValue("val1", "val2", "val3").
-		SetSQLInsertValue("val1", "val2", SetSQLInsertToTsVector("val3"))
+		SetSQLInsertValue("val1", "val2", SetSQLInsertToTsVector("english", "val3"))
 	if sqlStr := sql.BuildSQL(); sqlStr != insertToTsVectorQuery {
-		t.Errorf("result must be (%s) BuildSQL give (%s)", insertQuery, sqlStr)
+		t.Errorf("result must be (%s) BuildSQL give (%s)", insertToTsVectorQuery, sqlStr)
 	}
 }
 
@@ -148,10 +148,11 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-const updateToTsVectorQuery string = "UPDATE table SET col1=$1, val2=to_tsvector('english', $2) WHERE col3=$3"
+const updateToTsVectorQuery string = "UPDATE schema.table SET col1=$1, val2=to_tsvector('english', $2) WHERE col3=$3"
 
 func TestUpdateToTsVector(t *testing.T) {
 	sql := NewSQLGo().
+		SetSQLSchema("schema").
 		SetSQLUpdate("table").
 		SetSQLUpdateValue("col1", "val1").
 		SetSQLUpdateToTsVector("val2", "english", "coalesce(title, '') || ' ' || coalesce(body, '')").
@@ -159,6 +160,22 @@ func TestUpdateToTsVector(t *testing.T) {
 	if sqlStr := sql.BuildSQL(); sqlStr != updateToTsVectorQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", updateQuery, sqlStr)
 	}
+}
+
+func TestUpdateToTsVectorPrepend(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SQLUpdate("table",
+			SetSQLUpdateValue("col1", "val1"),
+			SetSQLUpdateToTsVector("val2", "english", "coalesce(title, '') || ' ' || coalesce(body, '')"),
+		).
+		SQLWhere(
+			SetSQLWhere("AND", "col3", "=", "val3"),
+		)
+	if sqlStr := sql.BuildSQL(); sqlStr != updateToTsVectorQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", updateToTsVectorQuery, sqlStr)
+	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
 // func TestWhereINClause(t *testing.T) {

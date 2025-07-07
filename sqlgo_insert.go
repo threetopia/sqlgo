@@ -27,10 +27,11 @@ type (
 
 	sqlGoInsertColumn      string
 	sqlGoInsertColumnSlice []sqlGoInsertColumn
-	sqlGoInsertValue       interface{}
+	sqlGoInsertValue       sqlGoValue
 	sqlGoInsertValueSlice  []sqlGoInsertValue
 	sqlGoInsertToTsVector  struct {
-		value interface{}
+		lang  string
+		value sqlGoValue
 	}
 )
 
@@ -46,8 +47,9 @@ func SetSQLInsertValue(values ...sqlGoInsertValue) sqlGoInsertValueSlice {
 	return values
 }
 
-func SetSQLInsertToTsVector(value sqlGoInsertValue) sqlGoInsertToTsVector {
+func SetSQLInsertToTsVector(lang string, value sqlGoInsertValue) sqlGoInsertToTsVector {
 	return sqlGoInsertToTsVector{
+		lang:  lang,
 		value: value,
 	}
 }
@@ -126,7 +128,7 @@ func (s *sqlGoInsert) BuildSQL() string {
 			switch vType := vValue.(type) {
 			case sqlGoInsertToTsVector:
 				s.sqlGoParameter.SetSQLParameter(vType.value)
-				sql = fmt.Sprintf("%sto_tsvector(%s)", sql, s.sqlGoParameter.GetSQLParameterSign(vType.value))
+				sql = fmt.Sprintf("%sto_tsvector('%s', %s)", sql, vType.lang, s.sqlGoParameter.GetSQLParameterSign(vType.value))
 			default:
 				s.sqlGoParameter.SetSQLParameter(vType)
 				sql = fmt.Sprintf("%s%s", sql, s.sqlGoParameter.GetSQLParameterSign(vType))

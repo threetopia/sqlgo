@@ -9,7 +9,7 @@ type SQLGoUpdate interface {
 	SetSQLUpdate(table sqlGoTable) SQLGoUpdate
 	SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQLGoUpdate
 	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate
-	SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGoUpdate
+	SetSQLUpdateToTsVector(column sqlGoColumn, lang string, value sqlGoValue) SQLGoUpdate
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoUpdate
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
@@ -78,8 +78,8 @@ func (s *sqlGoUpdate) SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQ
 	return s
 }
 
-func (s *sqlGoUpdate) SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGoUpdate {
-	s.SetSQLUpdateValueSlice(SetSQLUpdateToTsVector(column, operator, value))
+func (s *sqlGoUpdate) SetSQLUpdateToTsVector(column sqlGoColumn, lang string, value sqlGoValue) SQLGoUpdate {
+	s.SetSQLUpdateValueSlice(SetSQLUpdateToTsVector(column, lang, value))
 	return s
 }
 
