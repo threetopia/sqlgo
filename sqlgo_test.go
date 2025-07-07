@@ -148,13 +148,13 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-const updateToTsVectorQuery string = "UPDATE table SET col1=$1, col2=to_tsvector($2) WHERE col3=$3"
+const updateToTsVectorQuery string = "UPDATE table SET col1=$1, val2=to_tsvector('english', $2) WHERE col3=$3"
 
 func TestUpdateToTsVector(t *testing.T) {
 	sql := NewSQLGo().
 		SetSQLUpdate("table").
 		SetSQLUpdateValue("col1", "val1").
-		SetSQLUpdateValue("col2", SetSQLUpdateToTsVector("val2")).
+		SetSQLUpdateToTsVector("val2", "english", "coalesce(title, '') || ' ' || coalesce(body, '')").
 		SetSQLWhere("AND", "col3", "=", "val3")
 	if sqlStr := sql.BuildSQL(); sqlStr != updateToTsVectorQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", updateQuery, sqlStr)
@@ -288,29 +288,17 @@ func TestBetween(t *testing.T) {
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
+const whereTsQuery string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank"
+
 func TestToTsQuery(t *testing.T) {
 	sql := NewSQLGo().
 		SQLSchema("schema").
 		SQLSelect(
-			SetSQLSelect("t.column_one", "columnOne"),
-			SetSQLSelect("t.column_two", "columnTwo"),
-			SetSQLSelect("t.column_three", "columnThree"),
-			SetSQLSelect("t.column_no_alias", ""),
+			SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank"),
 		).
-		SQLFrom("table", "t").
-		SQLJoin(
-			SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")),
-			SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")),
-		).
-		SQLWhere(
-			SetSQLWhere("AND", "t.column_one", "ILIKE ANY", []int{1, 2, 3}),
-		).
-		SQLWhereGroup("OR",
-			SetSQLWhere("AND", "t.column_three", "=", 3),
-			SetSQLWhereToTsQuery("AND", "t.column_two", MakeSQLWhereToTsQuery("|", "asd"), MakeSQLWhereToTsQuery("|", "qwewqe")),
-		)
-	if sqlStr := sql.BuildSQL(); sqlStr != whereBetween {
-		t.Errorf("result must be (%s) BuildSQL give (%s)", whereBetween, sqlStr)
+		SQLWhere(SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software"))
+	if sqlStr := sql.BuildSQL(); sqlStr != whereTsQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQuery, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }

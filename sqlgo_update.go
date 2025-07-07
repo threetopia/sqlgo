@@ -7,8 +7,9 @@ import (
 type SQLGoUpdate interface {
 	SQLUpdate(table sqlGoTable, values ...sqlGoUpdateValue) SQLGoUpdate
 	SetSQLUpdate(table sqlGoTable) SQLGoUpdate
-	SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate
+	SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQLGoUpdate
 	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUpdate
+	SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGoUpdate
 
 	SetSQLGoSchema(schema SQLGoSchema) SQLGoUpdate
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoUpdate
@@ -24,13 +25,14 @@ type (
 	}
 
 	sqlGoUpdateValue struct {
-		column string
-		value  interface{}
+		column sqlGoColumn
+		value  sqlGoValue
 	}
 	sqlGoUpdateValueSlice []sqlGoUpdateValue
 
 	sqlGoUpdateToTsVector struct {
-		value interface{}
+		lang  string
+		value sqlGoValue
 	}
 )
 
@@ -38,16 +40,20 @@ func NewSQLGoUpdate() SQLGoUpdate {
 	return new(sqlGoUpdate)
 }
 
-func SetSQLUpdateValue(column string, value interface{}) sqlGoUpdateValue {
+func SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) sqlGoUpdateValue {
 	return sqlGoUpdateValue{
 		column: column,
 		value:  value,
 	}
 }
 
-func SetSQLUpdateToTsVector(value interface{}) sqlGoUpdateToTsVector {
-	return sqlGoUpdateToTsVector{
-		value: value,
+func SetSQLUpdateToTsVector(column sqlGoColumn, lang string, value sqlGoValue) sqlGoUpdateValue {
+	return sqlGoUpdateValue{
+		column: column,
+		value: sqlGoUpdateToTsVector{
+			lang:  lang,
+			value: value,
+		},
 	}
 }
 
@@ -67,8 +73,13 @@ func (s *sqlGoUpdate) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGoUp
 	return s
 }
 
-func (s *sqlGoUpdate) SetSQLUpdateValue(column string, value interface{}) SQLGoUpdate {
+func (s *sqlGoUpdate) SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQLGoUpdate {
 	s.SetSQLUpdateValueSlice(SetSQLUpdateValue(column, value))
+	return s
+}
+
+func (s *sqlGoUpdate) SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGoUpdate {
+	s.SetSQLUpdateValueSlice(SetSQLUpdateToTsVector(column, operator, value))
 	return s
 }
 
@@ -100,7 +111,7 @@ func (s *sqlGoUpdate) BuildSQL() string {
 		switch vType := v.value.(type) {
 		case sqlGoUpdateToTsVector:
 			s.sqlGoParameter.SetSQLParameter(vType)
-			sql = fmt.Sprintf("%s%s=to_tsvector(%s)", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(vType))
+			sql = fmt.Sprintf("%s%s=to_tsvector('%s', %s)", sql, v.column, vType.lang, s.sqlGoParameter.GetSQLParameterSign(vType))
 		default:
 			s.sqlGoParameter.SetSQLParameter(vType)
 			sql = fmt.Sprintf("%s%s=%s", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(vType))
