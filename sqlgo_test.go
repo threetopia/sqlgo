@@ -296,6 +296,7 @@ func TestToTsQuery(t *testing.T) {
 		SQLSelect(
 			SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank"),
 		).
+		SQLFrom("table", "t").
 		SQLWhere(SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software"))
 	if sqlStr := sql.BuildSQL(); sqlStr != whereTsQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQuery, sqlStr)
