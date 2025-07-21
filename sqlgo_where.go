@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -214,6 +215,8 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []bool:
 			sql = buildWhereSlice(s, sql, operator, v, vType)
+		case []time.Time:
+			sql = buildWhereSlice(s, sql, operator, v, vType)
 		default:
 			if !v.isParam {
 				sql = fmt.Sprintf("%s%s%s%s", sql, v.whereColumn, v.operator, vType)
@@ -242,7 +245,7 @@ func buildWhereBetween(s SQLGoWhere, sql string, v sqlGoWhereValue, vType sqlGoW
 	return fmt.Sprintf("%s(%s %s %s AND %s)", sql, v.whereColumn, v.operator, firstParamSign, secondParamSign)
 }
 
-func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool](s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType []V) string {
+func buildWhereSlice[V string | int | int32 | int64 | float32 | float64 | bool | time.Time](s SQLGoWhere, sql string, operator string, v sqlGoWhereValue, vType []V) string {
 	loadedValue := make(map[V]bool)
 	cleanVType := make([]V, 0)
 	for _, vAny := range vType {
