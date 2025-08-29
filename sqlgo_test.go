@@ -305,7 +305,7 @@ func TestBetween(t *testing.T) {
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
-const whereTsQuery string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank"
+const whereTsQuery string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank FROM schema.table AS t WHERE tsv @@ to_tsquery('english', $2)"
 
 func TestToTsQuery(t *testing.T) {
 	sql := NewSQLGo().
@@ -316,6 +316,19 @@ func TestToTsQuery(t *testing.T) {
 		SQLFrom("table", "t").
 		SQLWhere(SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software"))
 	if sqlStr := sql.BuildSQL(); sqlStr != whereTsQuery {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQuery, sqlStr)
+	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
+}
+
+func TestToTsQueryPrepend(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank").
+		SQLFrom("table", "t")
+	sqlWhere := NewSQLGoWhere()
+	sqlWhere.SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software")
+	if sqlStr := sql.SetSQLGoWhere(sqlWhere).BuildSQL(); sqlStr != whereTsQuery {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQuery, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
