@@ -229,11 +229,10 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 	return sql
 }
 
-func buildWhereToTsQuery(s SQLGoWhere, sql string, v sqlGoWhereValue, value sqlGoWhereToTsQuery) string {
-	var sqlVal string
-	s.GetSQLGoParameter().SetSQLParameter(sqlVal)
-	paramSign := s.GetSQLGoParameter().GetSQLParameterSign(sqlVal)
-	return fmt.Sprintf("%s%s @@ to_tsquery('%s', %s)", sql, v.whereColumn, value.lang, paramSign)
+func buildWhereToTsQuery(s SQLGoWhere, sql string, v sqlGoWhereValue, queryVal sqlGoWhereToTsQuery) string {
+	s.GetSQLGoParameter().SetSQLParameter(queryVal.value)
+	paramSign := s.GetSQLGoParameter().GetSQLParameterSign(queryVal.value)
+	return fmt.Sprintf("%s%s @@ to_tsquery('%s', %s)", sql, v.whereColumn, queryVal.lang, paramSign)
 }
 
 func buildWhereBetween(s SQLGoWhere, sql string, v sqlGoWhereValue, vType sqlGoWhereBetween) string {
