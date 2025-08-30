@@ -69,6 +69,7 @@ type SQLGo interface {
 
 	SQLOrder(values ...sqlGoOrderValue) SQLGo
 	SetSQLOrder(value sqlGoValue, order string) SQLGo
+	SetSQLOrderEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue) SQLGo
 
 	SQLOffsetLimit(offset int, limit int) SQLGo
 	SetSQLLimit(limit int) SQLGo
@@ -100,11 +101,12 @@ type (
 		sqlGoParameter   SQLGoParameter
 	}
 
-	sqlGoAlias   string
-	sqlGoColumn  string
-	sqlGoDialect string
-	sqlGoTable   interface{}
-	sqlGoValue   interface{}
+	sqlGoAlias    string
+	sqlGoColumn   string
+	sqlGoOperator string
+	sqlGoDialect  string
+	sqlGoTable    interface{}
+	sqlGoValue    interface{}
 )
 
 func NewSQLGo() SQLGo {
@@ -351,6 +353,11 @@ func (s *sqlGo) SQLOrder(values ...sqlGoOrderValue) SQLGo {
 
 func (s *sqlGo) SetSQLOrder(value sqlGoValue, order string) SQLGo {
 	s.sqlGoOrder.SetSQLOrder(value, order)
+	return s
+}
+
+func (s *sqlGo) SetSQLOrderEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue) SQLGo {
+	s.sqlGoOrder.SetSQLOrderEmbedding(column, operator, value)
 	return s
 }
 
