@@ -110,8 +110,8 @@ func (s *sqlGoUpdate) BuildSQL() string {
 		}
 		switch vType := v.value.(type) {
 		case sqlGoUpdateToTsVector:
-			s.sqlGoParameter.SetSQLParameter(vType)
-			sql = fmt.Sprintf("%s%s=to_tsvector('%s', %s)", sql, v.column, vType.lang, s.sqlGoParameter.GetSQLParameterSign(vType))
+			s.sqlGoParameter.SetSQLParameter(vType.value)
+			sql = fmt.Sprintf("%s%s=to_tsvector('%s', %s)", sql, v.column, vType.lang, s.sqlGoParameter.GetSQLParameterSign(vType.value))
 		default:
 			s.sqlGoParameter.SetSQLParameter(vType)
 			sql = fmt.Sprintf("%s%s=%s", sql, v.column, s.sqlGoParameter.GetSQLParameterSign(vType))
