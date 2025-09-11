@@ -96,8 +96,8 @@ func (s *sqlGoOrder) BuildSQL() string {
 			sql = fmt.Sprintf("(%s) %s", vType.BuildSQL(), v.order)
 			s.SetSQLGoParameter(vType.GetSQLGoParameter())
 		case sqlGoOrderEmbedding:
-			s.sqlGoParameter.SetSQLParameter(vType)
-			sql = fmt.Sprintf("%s%s %s %s", sql, vType.column, vType.operator, s.sqlGoParameter.GetSQLParameterSign(vType))
+			s.sqlGoParameter.SetSQLParameter(vType.value)
+			sql = fmt.Sprintf("%s%s %s %s", sql, vType.column, vType.operator, s.sqlGoParameter.GetSQLParameterSign(vType.value))
 		default:
 			sql = fmt.Sprintf("%s%s %s", sql, v.value, v.order)
 		}
