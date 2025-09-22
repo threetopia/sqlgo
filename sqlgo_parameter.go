@@ -13,7 +13,7 @@ type SQLGoParameter interface {
 
 type sqlGoParameter struct {
 	parameterList []interface{}
-	parameterMap  map[interface{}]int
+	parameterMap  map[string]int
 }
 
 func NewSQLGoParameter() SQLGoParameter {
@@ -31,11 +31,10 @@ func (s *sqlGoParameter) SetSQLParameter(value interface{}) SQLGoParameter {
 
 	hashVal := hash(value, fmt.Sprintf("%T", value))
 	if s.parameterMap == nil {
-		s.parameterMap = make(map[interface{}]int)
+		s.parameterMap = make(map[string]int)
 	} else if _, ok := s.parameterMap[hashVal]; ok {
 		return s
 	}
-
 	s.parameterList = append(s.parameterList, value)
 	s.parameterMap[hashVal] = len(s.parameterList)
 	return s

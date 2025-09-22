@@ -6,6 +6,7 @@ type SQLGoSelect interface {
 	SQLSelect(values ...sqlGoSelectValue) SQLGoSelect
 	SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 	SetSQLSelectTsRank(column sqlGoColumn, lang string, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
+	SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
 	SQLGoBase
@@ -28,6 +29,10 @@ type (
 		column sqlGoColumn
 		lang   string
 		value  sqlGoValue
+	}
+
+	sqlGoSelectDistinct struct {
+		column sqlGoColumn
 	}
 )
 
@@ -53,6 +58,14 @@ func SetSQLSelectTsRank(column sqlGoColumn, lang string, value sqlGoValue, alias
 	}
 }
 
+func SetSQLSelectDistinct(column sqlGoColumn) sqlGoSelectValue {
+	return sqlGoSelectValue{
+		value: sqlGoSelectDistinct{
+			column: column,
+		},
+	}
+}
+
 func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
 	s.values = append(s.values, values...)
 	return s
@@ -65,6 +78,11 @@ func (s *sqlGoSelect) SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGoSele
 
 func (s *sqlGoSelect) SetSQLSelectTsRank(column sqlGoColumn, lang string, value sqlGoValue, alias sqlGoAlias) SQLGoSelect {
 	s.values = append(s.values, SetSQLSelectTsRank(column, lang, value, alias))
+	return s
+}
+
+func (s *sqlGoSelect) SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelectDistinct(column))
 	return s
 }
 
@@ -96,6 +114,8 @@ func (s *sqlGoSelect) BuildSQL() string {
 		case sqlGoSelectTsRank:
 			s.GetSQLGoParameter().SetSQLParameter(vType.value)
 			sql = fmt.Sprintf("%sts_rank(%s, to_tsquery('%s', %s))", sql, vType.column, vType.lang, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
+		case sqlGoSelectDistinct:
+			sql = fmt.Sprintf("%sDISTINCT ON (%s) %s", sql, vType.column, vType.column)
 		default:
 			sql = fmt.Sprintf("%s%s", sql, vType)
 		}

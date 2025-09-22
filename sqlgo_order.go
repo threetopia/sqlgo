@@ -99,7 +99,11 @@ func (s *sqlGoOrder) BuildSQL() string {
 			s.sqlGoParameter.SetSQLParameter(vType.value)
 			sql = fmt.Sprintf("%s%s %s %s", sql, vType.column, vType.operator, s.sqlGoParameter.GetSQLParameterSign(vType.value))
 		default:
-			sql = fmt.Sprintf("%s%s %s", sql, v.value, v.order)
+			if v.order == "" {
+				sql = fmt.Sprintf("%s%s", sql, v.value)
+			} else {
+				sql = fmt.Sprintf("%s%s %s", sql, v.value, v.order)
+			}
 		}
 	}
 	return sql

@@ -38,7 +38,7 @@ type SQLGo interface {
 	SetSQLUpdate(table sqlGoTable) SQLGo
 	SetSQLUpdateValue(column sqlGoColumn, value sqlGoValue) SQLGo
 	SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo
-	SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGo
+	SetSQLUpdateToTsVector(column sqlGoColumn, lang string, value sqlGoValue) SQLGo
 
 	SQLDelete(table sqlGoTable, sqlWhere ...sqlGoWhereValue) SQLGo
 	SetSQLDelete(table sqlGoTable) SQLGo
@@ -46,6 +46,7 @@ type SQLGo interface {
 	SQLSelect(values ...sqlGoSelectValue) SQLGo
 	SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGo
 	SetSQLSelectTsRank(column sqlGoColumn, operator string, value sqlGoValue, alias sqlGoAlias) SQLGo
+	SetSQLSelectDistinct(column sqlGoColumn) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo
@@ -103,8 +104,8 @@ type (
 
 	sqlGoAlias    string
 	sqlGoColumn   string
-	sqlGoOperator string
 	sqlGoDialect  string
+	sqlGoOperator string
 	sqlGoTable    interface{}
 	sqlGoValue    interface{}
 )
@@ -240,8 +241,8 @@ func (s *sqlGo) SetSQLUpdateValueSlice(values ...sqlGoUpdateValue) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLUpdateToTsVector(column sqlGoColumn, operator string, value sqlGoValue) SQLGo {
-	s.sqlGoUpdate.SetSQLUpdateToTsVector(column, operator, value)
+func (s *sqlGo) SetSQLUpdateToTsVector(column sqlGoColumn, lang string, value sqlGoValue) SQLGo {
+	s.sqlGoUpdate.SetSQLUpdateToTsVector(column, lang, value)
 	return s
 }
 
@@ -268,6 +269,11 @@ func (s *sqlGo) SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGo {
 
 func (s *sqlGo) SetSQLSelectTsRank(column sqlGoColumn, operator string, value sqlGoValue, alias sqlGoAlias) SQLGo {
 	s.sqlGoSelect.SetSQLSelectTsRank(column, operator, value, alias)
+	return s
+}
+
+func (s *sqlGo) SetSQLSelectDistinct(column sqlGoColumn) SQLGo {
+	s.sqlGoSelect.SetSQLSelectDistinct(column)
 	return s
 }
 
