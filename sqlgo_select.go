@@ -7,6 +7,7 @@ type SQLGoSelect interface {
 	SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 	SetSQLSelectTsRank(column sqlGoColumn, lang string, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 	SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect
+	SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
 	SQLGoBase
@@ -33,6 +34,12 @@ type (
 
 	sqlGoSelectDistinct struct {
 		column sqlGoColumn
+	}
+
+	sqlGoSelectEmbedding struct {
+		column   sqlGoColumn
+		operator sqlGoOperator
+		value    sqlGoValue
 	}
 )
 
@@ -66,6 +73,17 @@ func SetSQLSelectDistinct(column sqlGoColumn) sqlGoSelectValue {
 	}
 }
 
+func SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) sqlGoSelectValue {
+	return sqlGoSelectValue{
+		alias: alias,
+		value: sqlGoSelectEmbedding{
+			column:   column,
+			operator: operator,
+			value:    value,
+		},
+	}
+}
+
 func (s *sqlGoSelect) SQLSelect(values ...sqlGoSelectValue) SQLGoSelect {
 	s.values = append(s.values, values...)
 	return s
@@ -83,6 +101,11 @@ func (s *sqlGoSelect) SetSQLSelectTsRank(column sqlGoColumn, lang string, value 
 
 func (s *sqlGoSelect) SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect {
 	s.values = append(s.values, SetSQLSelectDistinct(column))
+	return s
+}
+
+func (s *sqlGoSelect) SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelectEmbedding(column, operator, value, alias))
 	return s
 }
 
@@ -116,6 +139,9 @@ func (s *sqlGoSelect) BuildSQL() string {
 			sql = fmt.Sprintf("%sts_rank(%s, to_tsquery('%s', %s))", sql, vType.column, vType.lang, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
 		case sqlGoSelectDistinct:
 			sql = fmt.Sprintf("%sDISTINCT ON (%s) %s", sql, vType.column, vType.column)
+		case sqlGoSelectEmbedding:
+			s.GetSQLGoParameter().SetSQLParameter(vType.value)
+			sql = fmt.Sprintf("%s(%s %s %s)", sql, vType.column, vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
 		default:
 			sql = fmt.Sprintf("%s%s", sql, vType)
 		}

@@ -334,7 +334,7 @@ func TestToTsQueryPrepend(t *testing.T) {
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
 
-const whereTsQueryEmbedding string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank FROM schema.table AS t WHERE tsv @@ to_tsquery('english', $2) ORDER BY embedding <-> $3"
+const whereTsQueryEmbedding string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank FROM schema.table AS t WHERE tsv @@ to_tsquery('english', $2) ORDER BY embedding <=> $3"
 
 func TestToTsQueryEmbedding(t *testing.T) {
 	sql := NewSQLGo().
@@ -342,7 +342,7 @@ func TestToTsQueryEmbedding(t *testing.T) {
 		SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank").
 		SQLFrom("table", "t").
 		SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software & networking").
-		SetSQLOrderEmbedding("embedding", "<->", "[1,2,3,4]")
+		SetSQLOrderEmbedding("embedding", "<=>", "[1,2,3,4]")
 	if sqlStr := sql.BuildSQL(); sqlStr != whereTsQueryEmbedding {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQueryEmbedding, sqlStr)
 	}
@@ -357,9 +357,27 @@ func TestToTsQueryEmbeddingPrepend(t *testing.T) {
 	sqlWhere := NewSQLGoWhere()
 	sqlWhere.SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software & networking")
 	sqlOrderBy := NewSQLGoOrder()
-	sqlOrderBy.SetSQLOrderEmbedding("embedding", "<->", "[1,2,3,4]")
+	sqlOrderBy.SetSQLOrderEmbedding("embedding", "<=>", "[1,2,3,4]")
 	if sqlStr := sql.SetSQLGoWhere(sqlWhere).SetSQLGoOrder(sqlOrderBy).BuildSQL(); sqlStr != whereTsQueryEmbedding {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", whereTsQueryEmbedding, sqlStr)
+	}
+	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
+}
+
+const selectTsQueryEmbedding string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank, (embedding <=> $2) AS similarity FROM schema.table AS t WHERE tsv @@ to_tsquery('english', $3) ORDER BY embedding"
+
+func TestToSelectEmbedding(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank").
+		SetSQLSelectEmbedding("embedding", "<=>", "[1,2,3,4]", "similarity").
+		SQLFrom("table", "t")
+	sqlWhere := NewSQLGoWhere()
+	sqlWhere.SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software & networking")
+	sqlOrderBy := NewSQLGoOrder()
+	sqlOrderBy.SetSQLOrder("embedding", "")
+	if sqlStr := sql.SetSQLGoWhere(sqlWhere).SetSQLGoOrder(sqlOrderBy).BuildSQL(); sqlStr != selectTsQueryEmbedding {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", selectTsQueryEmbedding, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
