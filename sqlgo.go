@@ -47,7 +47,8 @@ type SQLGo interface {
 	SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGo
 	SetSQLSelectTsRank(column sqlGoColumn, operator string, value sqlGoValue, alias sqlGoAlias) SQLGo
 	SetSQLSelectDistinct(column sqlGoColumn) SQLGo
-	SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGo
+	SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGo
+	SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, valueArray []sqlGoValue, alias sqlGoAlias) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo
@@ -110,6 +111,14 @@ type (
 	sqlGoTable    interface{}
 	sqlGoValue    interface{}
 )
+
+func AddSQLGoValue(value sqlGoValue) sqlGoValue {
+	return value
+}
+
+func AddSQLGoValueArray(value ...sqlGoValue) []sqlGoValue {
+	return value
+}
 
 func NewSQLGo() SQLGo {
 	return &sqlGo{
@@ -278,8 +287,13 @@ func (s *sqlGo) SetSQLSelectDistinct(column sqlGoColumn) SQLGo {
 	return s
 }
 
-func (s *sqlGo) SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGo {
-	s.sqlGoSelect.SetSQLSelectEmbedding(column, operator, value, alias)
+func (s *sqlGo) SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGo {
+	s.sqlGoSelect.SetSQLSelectEmbedding(prefix, column, operator, value, alias)
+	return s
+}
+
+func (s *sqlGo) SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, value []sqlGoValue, alias sqlGoAlias) SQLGo {
+	s.sqlGoSelect.SetSQLSelectEmbeddingArray(prefix, column, operator, value, alias)
 	return s
 }
 

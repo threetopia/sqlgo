@@ -370,7 +370,7 @@ func TestToSelectEmbedding(t *testing.T) {
 	sql := NewSQLGo().
 		SQLSchema("schema").
 		SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank").
-		SetSQLSelectEmbedding("embedding", "<=>", "[1,2,3,4]", "similarity").
+		SetSQLSelectEmbedding("", "embedding", "<=>", "[1,2,3,4]", "similarity").
 		SQLFrom("table", "t")
 	sqlWhere := NewSQLGoWhere()
 	sqlWhere.SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software & networking")
@@ -380,4 +380,23 @@ func TestToSelectEmbedding(t *testing.T) {
 		t.Errorf("result must be (%s) BuildSQL give (%s)", selectTsQueryEmbedding, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
+}
+
+const selectTsQueryEmbeddingArray string = "SELECT ts_rank(tsv, to_tsquery('english', $1)) AS rank, 1-(embedding <=> ARRAY[$2,$3,$4,$5]) AS similarity FROM schema.table AS t WHERE tsv @@ to_tsquery('english', $6) ORDER BY embedding"
+
+func TestToSelectEmbeddingArray(t *testing.T) {
+	sql := NewSQLGo().
+		SQLSchema("schema").
+		SetSQLSelectTsRank("tsv", "english", "open & source & software", "rank").
+		SetSQLSelectEmbeddingArray("1-", "embedding", "<=>", AddSQLGoValueArray("[1,2,3,4]", "[4,3,2,1]", "[4,3,1,2]", "[2,3,1,4]"), "similarity").
+		SQLFrom("table", "t")
+	sqlWhere := NewSQLGoWhere()
+	sqlWhere.SetSQLWhereToTsQuery("AND", "tsv", "english", "open & source & software & networking")
+	sqlOrderBy := NewSQLGoOrder()
+	sqlOrderBy.SetSQLOrder("embedding", "")
+	var sqlStr string
+	if sqlStr = sql.SetSQLGoWhere(sqlWhere).SetSQLGoOrder(sqlOrderBy).BuildSQL(); sqlStr != selectTsQueryEmbeddingArray {
+		t.Errorf("result must be\n(%s)\nBuildSQL give\n(%s)", selectTsQueryEmbeddingArray, sqlStr)
+	}
+	t.Log(sqlStr, "\n", sql.GetSQLGoParameter().GetSQLParameter())
 }

@@ -7,7 +7,8 @@ type SQLGoSelect interface {
 	SetSQLSelect(value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 	SetSQLSelectTsRank(column sqlGoColumn, lang string, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 	SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect
-	SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
+	SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
+	SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, value []sqlGoValue, alias sqlGoAlias) SQLGoSelect
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
 	SQLGoBase
@@ -37,9 +38,17 @@ type (
 	}
 
 	sqlGoSelectEmbedding struct {
+		prefix   string
 		column   sqlGoColumn
 		operator sqlGoOperator
 		value    sqlGoValue
+	}
+
+	sqlGoSelectEmbeddingArray struct {
+		prefix     string
+		column     sqlGoColumn
+		operator   sqlGoOperator
+		valueArray []sqlGoValue
 	}
 )
 
@@ -73,13 +82,26 @@ func SetSQLSelectDistinct(column sqlGoColumn) sqlGoSelectValue {
 	}
 }
 
-func SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) sqlGoSelectValue {
+func SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) sqlGoSelectValue {
 	return sqlGoSelectValue{
 		alias: alias,
 		value: sqlGoSelectEmbedding{
+			prefix:   prefix,
 			column:   column,
 			operator: operator,
 			value:    value,
+		},
+	}
+}
+
+func SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, valueArray []sqlGoValue, alias sqlGoAlias) sqlGoSelectValue {
+	return sqlGoSelectValue{
+		alias: alias,
+		value: sqlGoSelectEmbeddingArray{
+			prefix:     prefix,
+			column:     column,
+			operator:   operator,
+			valueArray: valueArray,
 		},
 	}
 }
@@ -104,8 +126,13 @@ func (s *sqlGoSelect) SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect {
 	return s
 }
 
-func (s *sqlGoSelect) SetSQLSelectEmbedding(column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect {
-	s.values = append(s.values, SetSQLSelectEmbedding(column, operator, value, alias))
+func (s *sqlGoSelect) SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelectEmbedding(prefix, column, operator, value, alias))
+	return s
+}
+
+func (s *sqlGoSelect) SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, valueArray []sqlGoValue, alias sqlGoAlias) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelectEmbeddingArray(prefix, column, operator, valueArray, alias))
 	return s
 }
 
@@ -141,7 +168,26 @@ func (s *sqlGoSelect) BuildSQL() string {
 			sql = fmt.Sprintf("%sDISTINCT ON (%s) %s", sql, vType.column, vType.column)
 		case sqlGoSelectEmbedding:
 			s.GetSQLGoParameter().SetSQLParameter(vType.value)
-			sql = fmt.Sprintf("%s(%s %s %s)", sql, vType.column, vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
+			if vType.prefix == "" {
+				sql = fmt.Sprintf("%s(%s %s %s)", sql, vType.column, vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
+			} else {
+				sql = fmt.Sprintf("%s %s(%s %s %s)", sql, vType.prefix, vType.column, vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
+			}
+		case sqlGoSelectEmbeddingArray:
+			sqlArray := "ARRAY["
+			for i, arrayValue := range vType.valueArray {
+				s.GetSQLGoParameter().SetSQLParameter(arrayValue)
+				if i > 0 {
+					sqlArray = fmt.Sprintf("%s,", sqlArray)
+				}
+				sqlArray = fmt.Sprintf("%s%s", sqlArray, s.GetSQLGoParameter().GetSQLParameterSign(arrayValue))
+			}
+			sqlArray = fmt.Sprintf("%s]", sqlArray)
+			if vType.prefix == "" {
+				sql = fmt.Sprintf("%s(%s %s %s)", sql, vType.column, vType.operator, sqlArray)
+			} else {
+				sql = fmt.Sprintf("%s%s(%s %s %s)", sql, vType.prefix, vType.column, vType.operator, sqlArray)
+			}
 		default:
 			sql = fmt.Sprintf("%s%s", sql, vType)
 		}
