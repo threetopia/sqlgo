@@ -9,7 +9,7 @@ type SQLGoSelect interface {
 	SetSQLSelectDistinct(column sqlGoColumn) SQLGoSelect
 	SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 	SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, value []sqlGoValue, alias sqlGoAlias) SQLGoSelect
-	SetSQLSelectJaroWinklerSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
+	SetSQLSelectSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) SQLGoSelect
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoSelect
 	SQLGoBase
@@ -52,7 +52,7 @@ type (
 		valueArray []sqlGoValue
 	}
 
-	sqlGoSelectJaroWinklerSimilarity struct {
+	sqlGoSelectSimilarity struct {
 		column sqlGoColumn
 		value  sqlGoValue
 		alias  sqlGoAlias
@@ -113,10 +113,10 @@ func SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlG
 	}
 }
 
-func SetSQLSelectJaroWinklerSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) sqlGoSelectValue {
+func SetSQLSelectSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) sqlGoSelectValue {
 	return sqlGoSelectValue{
 		alias: alias,
-		value: sqlGoSelectJaroWinklerSimilarity{
+		value: sqlGoSelectSimilarity{
 			column: column,
 			value:  value,
 			alias:  alias,
@@ -154,8 +154,8 @@ func (s *sqlGoSelect) SetSQLSelectEmbeddingArray(prefix string, column sqlGoColu
 	return s
 }
 
-func (s *sqlGoSelect) SetSQLSelectJaroWinklerSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) SQLGoSelect {
-	s.values = append(s.values, SetSQLSelectJaroWinklerSimilarity(column, value, alias))
+func (s *sqlGoSelect) SetSQLSelectSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) SQLGoSelect {
+	s.values = append(s.values, SetSQLSelectSimilarity(column, value, alias))
 	return s
 }
 
@@ -211,9 +211,9 @@ func (s *sqlGoSelect) BuildSQL() string {
 			} else {
 				sql = fmt.Sprintf("%s%s(%s %s %s)", sql, vType.prefix, vType.column, vType.operator, sqlArray)
 			}
-		case sqlGoSelectJaroWinklerSimilarity:
+		case sqlGoSelectSimilarity:
 			s.GetSQLGoParameter().SetSQLParameter(vType.value)
-			sql = fmt.Sprintf("%sjarowinkler(%s, %s)", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
+			sql = fmt.Sprintf("%ssimilarity(%s, %s)", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
 		default:
 			sql = fmt.Sprintf("%s%s", sql, vType)
 		}

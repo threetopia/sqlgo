@@ -401,22 +401,22 @@ func TestToSelectEmbeddingArray(t *testing.T) {
 	t.Log(sqlStr, "\n", sql.GetSQLGoParameter().GetSQLParameter())
 }
 
-const selectJaroWinklerSimilarity string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias, jarowinkler(t.full_name, $1) AS similarity FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE jarowinkler(t.full_name, $1) >= $2"
+const selectSimilarity string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias, similarity(t.full_name, $1) AS similarity FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE similarity(t.full_name, $1) >= $2"
 
-func TestSelectJaroWinklerSimilarity(t *testing.T) {
+func TestSelectSimilarity(t *testing.T) {
 	sql := NewSQLGo().
 		SQLSchema("schema").
 		SetSQLSelect("t.column_one", "columnOne").
 		SetSQLSelect("t.column_two", "columnTwo").
 		SetSQLSelect("t.column_three", "columnThree").
 		SetSQLSelect("t.column_no_alias", "").
-		SetSQLSelectJaroWinklerSimilarity("t.full_name", "John Doe", "similarity").
+		SetSQLSelectSimilarity("t.full_name", "John Doe", "similarity").
 		SQLFrom("table", "t").
 		SetSQLJoin("INNER", "join_table1", "jt1", SetSQLJoinWhere("AND", "jt1.id", "=", "t.id")).
 		SetSQLJoin("INNER", "join_table2", "jt2", SetSQLJoinWhere("AND", "jt2.id", "=", "t.id")).
-		SetSQLWhereJaroWinklerSimilarity("AND", "t.full_name", "John Doe", ">=", 0.75)
-	if sqlStr := sql.BuildSQL(); sqlStr != selectJaroWinklerSimilarity {
-		t.Errorf("result must be (%s) BuildSQL give (%s)", selectJaroWinklerSimilarity, sqlStr)
+		SetSQLWhereSimilarity("AND", "t.full_name", "John Doe", ">=", 0.75)
+	if sqlStr := sql.BuildSQL(); sqlStr != selectSimilarity {
+		t.Errorf("result must be (%s) BuildSQL give (%s)", selectSimilarity, sqlStr)
 	}
 	t.Log(sql.GetSQLGoParameter().GetSQLParameter())
 }
