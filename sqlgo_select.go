@@ -213,7 +213,7 @@ func (s *sqlGoSelect) BuildSQL() string {
 			}
 		case sqlGoSelectJaroWinklerSimilarity:
 			s.GetSQLGoParameter().SetSQLParameter(vType.value)
-			sql = fmt.Sprintf("%sjaro_winkler_similarity(%s, %s)", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
+			sql = fmt.Sprintf("%sjarowinkler(%s, %s)", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value))
 		default:
 			sql = fmt.Sprintf("%s%s", sql, vType)
 		}

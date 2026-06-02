@@ -401,7 +401,7 @@ func TestToSelectEmbeddingArray(t *testing.T) {
 	t.Log(sqlStr, "\n", sql.GetSQLGoParameter().GetSQLParameter())
 }
 
-const selectJaroWinklerSimilarity string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias, jaro_winkler_similarity(t.full_name, $1) AS similarity FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE jaro_winkler_similarity(t.full_name, $1) >= $2"
+const selectJaroWinklerSimilarity string = "SELECT t.column_one AS columnOne, t.column_two AS columnTwo, t.column_three AS columnThree, t.column_no_alias, jarowinkler(t.full_name, $1) AS similarity FROM schema.table AS t INNER JOIN schema.join_table1 AS jt1 ON jt1.id=t.id INNER JOIN schema.join_table2 AS jt2 ON jt2.id=t.id WHERE jarowinkler(t.full_name, $1) >= $2"
 
 func TestSelectJaroWinklerSimilarity(t *testing.T) {
 	sql := NewSQLGo().

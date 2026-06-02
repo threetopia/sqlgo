@@ -230,7 +230,7 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 		case sqlGoJaroWinklerSimilarity:
 			s.GetSQLGoParameter().SetSQLParameter(vType.value)
 			s.GetSQLGoParameter().SetSQLParameter(vType.threshold)
-			sql = fmt.Sprintf("%sjaro_winkler_similarity(%s, %s) %s %s", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value), vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.threshold))
+			sql = fmt.Sprintf("%sjarowinkler(%s, %s) %s %s", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value), vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.threshold))
 		case []string:
 			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []int:
