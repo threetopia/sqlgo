@@ -49,6 +49,7 @@ type SQLGo interface {
 	SetSQLSelectDistinct(column sqlGoColumn) SQLGo
 	SetSQLSelectEmbedding(prefix string, column sqlGoColumn, operator sqlGoOperator, value sqlGoValue, alias sqlGoAlias) SQLGo
 	SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, operator sqlGoOperator, valueArray []sqlGoValue, alias sqlGoAlias) SQLGo
+	SetSQLSelectJaroWinklerSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) SQLGo
 
 	SQLValues(values ...sqlGoValuesValueSlice) SQLGo
 	SetSQLValues(values ...sqlGoValuesValueSlice) SQLGo
@@ -66,6 +67,7 @@ type SQLGo interface {
 	SetSQLWhereToTsQuery(whereType, whereColumn, lang string, value sqlGoValue) SQLGo
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
+	SetSQLWhereJaroWinklerSimilarity(whereType string, column sqlGoColumn, value sqlGoValue, operator string, threshold float64) SQLGo
 
 	SQLGroupBy(values ...sqlGoGroupByValue) SQLGo
 	SetSQLGroupBy(value sqlGoGroupByValue) SQLGo
@@ -297,6 +299,11 @@ func (s *sqlGo) SetSQLSelectEmbeddingArray(prefix string, column sqlGoColumn, op
 	return s
 }
 
+func (s *sqlGo) SetSQLSelectJaroWinklerSimilarity(column sqlGoColumn, value sqlGoValue, alias sqlGoAlias) SQLGo {
+	s.sqlGoSelect.SetSQLSelectJaroWinklerSimilarity(column, value, alias)
+	return s
+}
+
 func (s *sqlGo) SQLValues(values ...sqlGoValuesValueSlice) SQLGo {
 	s.sqlGoValues.SQLValues(values...)
 	return s
@@ -359,6 +366,11 @@ func (s *sqlGo) SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo
 
 func (s *sqlGo) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGo {
 	s.sqlGoWhere.SetSQLWhereGroup(whereType, values...)
+	return s
+}
+
+func (s *sqlGo) SetSQLWhereJaroWinklerSimilarity(whereType string, column sqlGoColumn, value sqlGoValue, operator string, threshold float64) SQLGo {
+	s.sqlGoWhere.SetSQLWhereJaroWinklerSimilarity(whereType, column, value, operator, threshold)
 	return s
 }
 

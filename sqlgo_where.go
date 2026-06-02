@@ -11,11 +11,12 @@ import (
 
 type SQLGoWhere interface {
 	SQLWhere(values ...sqlGoWhereValue) SQLGoWhere
-	SetSQLWhere(whereType, whereColumn, operator string, value sqlGoValue) SQLGoWhere
-	SetSQLWhereBetween(whereType, whereColumn string, firstVal, secondVal sqlGoValue) SQLGoWhere
-	SetSQLWhereToTsQuery(whereType, whereColumn, lang string, value sqlGoValue) SQLGoWhere
+	SetSQLWhere(whereType string, whereColumn string, operator string, value sqlGoValue) SQLGoWhere
+	SetSQLWhereBetween(whereType string, whereColumn string, firstVal, secondVal sqlGoValue) SQLGoWhere
+	SetSQLWhereToTsQuery(whereType string, whereColumn string, lang string, value sqlGoValue) SQLGoWhere
 	SQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
 	SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere
+	SetSQLWhereJaroWinklerSimilarity(whereType string, column sqlGoColumn, value sqlGoValue, operator string, threshold float64) SQLGoWhere
 
 	SetSQLGoParameter(sqlGoParameter SQLGoParameter) SQLGoWhere
 	SQLGoBase
@@ -45,6 +46,13 @@ type (
 	sqlGoWhereToTsQuery struct {
 		lang  string
 		value sqlGoValue
+	}
+
+	sqlGoJaroWinklerSimilarity struct {
+		column    sqlGoColumn
+		value     sqlGoValue
+		operator  string
+		threshold float64
 	}
 )
 
@@ -127,6 +135,19 @@ func SetSQLWhereNotParam(whereType string, whereColumn string, operator string, 
 	}
 }
 
+func SetSQLWhereJaroWinklerSimilarity(whereType string, column sqlGoColumn, value sqlGoValue, operator string, threshold float64) sqlGoWhereValue {
+	return sqlGoWhereValue{
+		whereType: whereType,
+		value: sqlGoJaroWinklerSimilarity{
+			column:    column,
+			value:     value,
+			operator:  operator,
+			threshold: threshold,
+		},
+		isParam: true,
+	}
+}
+
 func (s *sqlGoWhere) SQLWhere(values ...sqlGoWhereValue) SQLGoWhere {
 	s.values = append(s.values, values...)
 	return s
@@ -154,6 +175,11 @@ func (s *sqlGoWhere) SQLWhereGroup(whereType string, values ...sqlGoWhereValue) 
 
 func (s *sqlGoWhere) SetSQLWhereGroup(whereType string, values ...sqlGoWhereValue) SQLGoWhere {
 	s.SQLWhereGroup(whereType, values...)
+	return s
+}
+
+func (s *sqlGoWhere) SetSQLWhereJaroWinklerSimilarity(whereType string, column sqlGoColumn, value sqlGoValue, operator string, threshold float64) SQLGoWhere {
+	s.values = append(s.values, SetSQLWhereJaroWinklerSimilarity(whereType, column, value, operator, threshold))
 	return s
 }
 
@@ -201,6 +227,10 @@ func buildWhereValues(s SQLGoWhere, values sqlGoWhereValueSlice) string {
 			sql = buildWhereBetween(s, sql, v, vType)
 		case sqlGoWhereValueSlice:
 			sql = fmt.Sprintf("%s(%s)", sql, buildWhereValues(s, vType))
+		case sqlGoJaroWinklerSimilarity:
+			s.GetSQLGoParameter().SetSQLParameter(vType.value)
+			s.GetSQLGoParameter().SetSQLParameter(vType.threshold)
+			sql = fmt.Sprintf("%sjaro_winkler_similarity(%s, %s) %s %s", sql, vType.column, s.GetSQLGoParameter().GetSQLParameterSign(vType.value), vType.operator, s.GetSQLGoParameter().GetSQLParameterSign(vType.threshold))
 		case []string:
 			sql = buildWhereSlice(s, sql, operator, v, vType)
 		case []int:
