@@ -11,6 +11,7 @@ A chainable SQL query builder for Go. `sqlgo` builds PostgreSQL statements and k
 - PostgreSQL trigram similarity with `pg_trgm`.
 - PostgreSQL vector distance with `pgvector`.
 - Two equivalent usage styles: chain methods and `Set*` methods.
+- Subqueries in SELECT projections, FROM sources, and WHERE predicates, including correlated and nested forms.
 
 ## Requirements
 
@@ -171,6 +172,144 @@ b := sqlgo.NewSQLGo().
 
 Both produce `SELECT id AS id FROM users AS u WHERE id=$1`.
 
+## Subqueries
+
+Every clause that accepts a source or value can take another `SQLGo` builder. The subquery uses the same API, is wrapped in parentheses, and shares the outer builder's parameter registry. Parameters inside the subquery are registered in SQL order before the outer clause parameters.
+
+### SELECT Projection
+
+Pass a subquery as a projection value. The result is wrapped in parentheses and the outer alias is appended.
+
+```go
+orderCount := sqlgo.NewSQLGo().
+    SetSQLSelect("count(*)", "cnt").
+    SQLFrom("orders", "o").
+    SQLWhere(sqlgo.SetSQLWhereNotParam("AND", "o.user_id", "=", "u.id"))
+
+query := sqlgo.NewSQLGo().
+    SetSQLSelect("u.id", "id").
+    SetSQLSelect(orderCount, "order_count").
+    SQLFrom("users", "u")
+```
+
+```sql
+SELECT u.id AS id, (SELECT count(*) AS cnt FROM orders AS o WHERE o.user_id=u.id) AS order_count FROM users AS u
+```
+
+`SetSQLWhereNotParam` writes the condition value as a literal. Use it for a correlated condition that references an outer column such as `u.id`. A normal `SetSQLWhere` would register `u.id` as a bound parameter.
+
+### FROM Source
+
+A subquery passed to `SQLFrom` becomes a derived table. It is wrapped in parentheses and needs an alias.
+
+```go
+recent := sqlgo.NewSQLGo().
+    SetSQLSelect("id", "").
+    SQLFrom("orders", "o").
+    SetSQLWhere("AND", "o.total", ">=", 100)
+
+query := sqlgo.NewSQLGo().
+    SetSQLSelect("s.id", "id").
+    SQLFrom(recent, "s").
+    SetSQLWhere("AND", "s.id", "=", 1)
+```
+
+```sql
+SELECT s.id AS id FROM (SELECT id FROM orders AS o WHERE o.total>=$1) AS s WHERE s.id=$2
+```
+
+Arguments: `[100, 1]`. The subquery parameter comes first because the FROM clause is built before WHERE.
+
+### WHERE Predicate
+
+Pass a subquery as the value of `IN`, `NOT IN`, or a comparison operator. The subquery is wrapped in parentheses.
+
+```go
+activeUsers := sqlgo.NewSQLGo().
+    SetSQLSelect("user_id", "").
+    SQLFrom("orders", "o").
+    SetSQLWhere("AND", "o.total", ">=", 100)
+
+query := sqlgo.NewSQLGo().
+    SetSQLSelect("u.id", "id").
+    SQLFrom("users", "u").
+    SetSQLWhere("AND", "u.id", "IN", activeUsers)
+```
+
+```sql
+SELECT u.id AS id FROM users AS u WHERE u.id IN (SELECT user_id FROM orders AS o WHERE o.total>=$1)
+```
+
+For `EXISTS`, pass an empty column and the `EXISTS` operator:
+
+```go
+query := sqlgo.NewSQLGo().
+    SetSQLSelect("u.id", "id").
+    SQLFrom("users", "u").
+    SetSQLWhere("AND", "", "EXISTS",
+        sqlgo.NewSQLGo().
+            SetSQLSelect("1", "").
+            SQLFrom("orders", "o").
+            SQLWhere(sqlgo.SetSQLWhereNotParam("AND", "o.user_id", "=", "u.id")),
+    )
+```
+
+```sql
+SELECT u.id AS id FROM users AS u WHERE EXISTS(SELECT 1 FROM orders AS o WHERE o.user_id=u.id)
+```
+
+### JOIN Source
+
+A subquery passed to `SetSQLJoin` becomes a derived table. It needs an alias. Use `SetSQLJoinWhere` for a literal column-to-column condition.
+
+```go
+totals := sqlgo.NewSQLGo().
+    SetSQLSelect("user_id", "user_id").
+    SetSQLSelect("sum(total)", "total").
+    SQLFrom("orders", "o").
+    SQLGroupBy("user_id")
+
+query := sqlgo.NewSQLGo().
+    SetSQLSelect("u.id", "id").
+    SQLFrom("users", "u").
+    SetSQLJoin("LEFT", totals, "t",
+        sqlgo.SetSQLJoinWhere("AND", "t.user_id", "=", "u.id"),
+    )
+```
+
+Current output:
+
+```sql
+SELECT u.id AS id FROM users AS u LEFT JOIN (SELECT user_id AS user_id, sum(total) AS total FROM orders AS o GROUP BY user_id) AS t WHERE t.user_id=u.id
+```
+
+Known limitation: a subquery JOIN appends its condition with `WHERE` instead of `ON`, so that output is not valid SQL. Use a derived table in `FROM` when you need a working join.
+
+### Nesting
+
+Subqueries can be nested. Each level is wrapped in parentheses and shares the outer parameter registry.
+
+```go
+inner := sqlgo.NewSQLGo().
+    SetSQLSelect("id", "").
+    SQLFrom("orders", "o").
+    SetSQLWhere("AND", "o.total", ">=", 100)
+
+middle := sqlgo.NewSQLGo().
+    SetSQLSelect("id", "").
+    SQLFrom(inner, "i")
+
+query := sqlgo.NewSQLGo().
+    SetSQLSelect("m.id", "id").
+    SQLFrom(middle, "m")
+```
+
+```sql
+SELECT m.id AS id FROM (SELECT id FROM (SELECT id FROM orders AS o WHERE o.total>=$1) AS i) AS m
+```
+
+Arguments: `[100]`.
+
 ## PostgreSQL Features
 
 ### Full-Text Search
@@ -251,7 +390,7 @@ The builder composes clauses in a fixed order, regardless of the order you call 
 | Select | `SQLSelect`, `SetSQLSelect`, `SetSQLSelectDistinct`, `SetSQLSelectTsRank`, `SetSQLSelectSimilarity`, `SetSQLSelectEmbedding`, `SetSQLSelectEmbeddingArray` |
 | From | `SQLFrom`, `SetSQLFrom`, `SetSQLFromColumn` |
 | Join | `SQLJoin`, `SetSQLJoin`, `SetSQLJoinWhere` |
-| Where | `SQLWhere`, `SetSQLWhere`, `SetSQLWhereBetween`, `SQLWhereGroup`, `SetSQLWhereGroup`, `SetSQLWhereToTsQuery`, `SetSQLWhereSimilarity` |
+| Where | `SQLWhere`, `SetSQLWhere`, `SetSQLWhereBetween`, `SQLWhereGroup`, `SetSQLWhereGroup`, `SetSQLWhereToTsQuery`, `SetSQLWhereSimilarity`, `SetSQLWhereNotParam` |
 | Group by | `SQLGroupBy`, `SetSQLGroupBy` |
 | Order | `SQLOrder`, `SetSQLOrder`, `SetSQLOrderEmbedding` |
 | Offset and limit | `SQLOffsetLimit`, `SetSQLOffset`, `SetSQLLimit`, `SQLPageLimit`, `SetSQLPage` |
@@ -270,6 +409,8 @@ The builder composes clauses in a fixed order, regardless of the order you call 
 - A builder holds mutable state. Create one builder per query and do not share it across goroutines.
 - Identifiers such as table and column names are written as provided and are not quoted or escaped.
 - `SetSQLPage` reads the current limit, so set the limit before the page.
+- A subquery used as a JOIN target appends its condition with `WHERE` instead of `ON`. The generated statement can be invalid.
+- A subquery in `ORDER BY` is not supported reliably. The current output can lose the `ORDER BY` prefix and earlier order items.
 
 ## Documentation
 
