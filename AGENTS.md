@@ -1,138 +1,148 @@
 # AGENTS.md
 
-Guidance for agents working in the `sqlgo` repository.
+Operating guide for AI agents in the `sqlgo` repo. This document defines how work is done here. It does not duplicate the specifications. Behavior, contracts, and data have one source of truth: `docs/specs/`.
 
-## Project Overview
+## 1. Ground rules
 
-`sqlgo` is an SQL query builder library for Go (module `gitlab.com/threetopia/sqlgo/v2`, package `sqlgo`). All code lives in the root package.
+- Read this document and the relevant skill before changing code.
+- Every piece of work follows `docs/specs/`. Product and technical detail is not restated here.
+- Do not invent requirements, numbers, contracts, schemas, or behavior. If a specification does not exist, write it first with the `writing-specs` skill.
+- Every change must trace to a requirement ID (`FR-xxx`) in the FSD and to its design in the TSD/DRD.
+- If a change touches behavior, contracts, or data, the specification update belongs in the same plan. Do not defer specs as separate work.
+- For non-trivial work, write the plan in `docs/plans/` first and wait for an explicit go-ahead before code execution.
+- Agent tools may draft plans in `~/.commandcode/plans/`. That directory is untracked tool storage, not a deliverable. Copy the plan to `docs/plans/{yyyy-mm-dd}_{feature-name}.md` immediately after it is written, before implementation and without waiting to be asked. `docs/plans/` is the plan of record: when a copied plan changes, update it there in the same change.
+- Commit and push documents (brief, spec, plan) before code execution so they can be reviewed.
+- During execution, commit and push each finished item before starting the next one.
+- An implementation gap is not an exception to the rules. Record the gap and close it against the target contract.
 
-Current implementation scope: **PostgreSQL**. Placeholders use the `$N` format, parameters are passed through `github.com/lib/pq`, and PostgreSQL-specific builders are available: `tsvector`/`tsquery`, `similarity` (pg_trgm), and embedding (pgvector `<=>`). The `MySQLDialect`/`PostgreSQLDialect` constants exist in `sqlgo.go`, but there is no MySQL-specific builder branch yet.
+## 2. Project scope
 
-The API is chain-based:
+This repo implements **sqlgo**, a chainable SQL query builder library for Go (module `gitlab.com/threetopia/sqlgo/v2`, package `sqlgo`). All code lives in the root package. The builder composes PostgreSQL statement text and keeps the `$N` placeholder list in sync; it does not open connections, execute queries, manage transactions, or run migrations.
 
-```go
-sql := sqlgo.NewSQLGo().
-    SQLSchema("schema").
-    SQLSelect(sqlgo.SetSQLSelect("t.id", "id")).
-    SQLFrom("table", "t").
-    SQLWhere(sqlgo.SetSQLWhere("AND", "t.id", "=", 1))
+Current scope is **PostgreSQL only**. `MySQLDialect` is defined in `sqlgo.go` but no MySQL builder branch exists. PostgreSQL-specific support covers `tsvector`/`tsquery` full-text search, `similarity` from `pg_trgm`, and vector distance from `pgvector`. The only runtime dependency is `github.com/lib/pq`.
 
-query := sql.BuildSQL()                           // SQL string
-args := sql.GetSQLGoParameter().GetSQLParameter() // []interface{}
-```
+Specification sets in `docs/specs/` are mandatory references:
 
-## Commands
+| Set | Documents | Used for |
+|---|---|---|
+| `sqlgo` | `2026-11-04_FSD_sqlgo.md`, `2026-11-04_TSD_sqlgo.md`, `2026-11-04_DRD_sqlgo.md` | Query-building requirements, public contracts, internal design, parameter registry, PostgreSQL data requirements |
+| `sqlgo` test cases | `../test-cases/2026-11-04_TCD_sqlgo.md` | Positive, negative, boundary, and acceptance coverage with expected results |
 
-```sh
-go build ./...
-go test ./...
-go vet ./...
-gofmt -l .
-```
+There is no DFD: the library owns no schema, owns no data store, and never executes SQL.
 
-`go.mod` targets `go 1.18`; do not use language features newer than that without bumping the module version. There is no CI, linter, or Makefile configuration in the repo: the minimum validation is build, test, vet, and gofmt.
+Repository layout:
 
-## File Structure
-
-| File | Contents |
+| Path | Contents |
 |---|---|
 | `sqlgo.go` | `SQLGo` facade, `NewSQLGo()`, `BuildSQL()` composition order, dialect constants |
 | `sqlgo_<clause>.go` | One file per clause: `insert`, `update`, `delete`, `select`, `from`, `join`, `where`, `values`, `group_by`, `order`, `offset_limit`, `schema` |
-| `sqlgo_parameter.go` | Parameter registry and placeholder generator |
-| `util.go` | `combineSQL` and `hash` helpers |
-| `sqlgo_test.go` | SQL and parameter construction tests |
+| `sqlgo_parameter.go` | Parameter registry and `$N` placeholder generator |
+| `util.go` | Shared helpers such as `combineSQL` |
+| `sqlgo_test.go` | SQL string and parameter construction tests |
+| `docs/` | `brief/`, `plans/`, `specs/`, `test-cases/` with templates and their dated instances |
+| `.agents/skills/` | Agent skills listed in section 3 |
 
-## Architecture
+Reading order:
 
-- Each clause has a public `SQLGo<Clause>` interface, a private `sqlGo<Clause>` implementation, and implements `SQLGoBase` (`GetSQLGoParameter`, `BuildSQL`) plus the `SetSQLGoParameter` setter.
-- There are two usage styles: prepend/chain methods (`SQLSelect(...)`, `SQLWhere(...)`) and one-at-a-time `SetSQL*` methods (`SetSQLSelect`, `SetSQLWhere`, ...). Both must produce identical SQL.
-- The package also exposes value constructor functions, e.g. `SetSQLSelect`, `SetSQLWhere`, `SetSQLOrder`, `AddSQLGoValue`, `AddSQLGoValueArray`.
-- The `sqlGo.BuildSQL()` facade composes clauses in a fixed order: insert → update → delete → select → from → join → where → values → group by → order → offset/limit. Empty clauses return an empty string and are skipped by `combineSQL`.
-- Parameters are registered via `SQLGoParameter.SetSQLParameter`; identical values (SHA-1 hash of JSON + type) use the same placeholder number. The order of `GetSQLParameter()` is first-appearance order.
-- The schema prefix (`SetSQLSchema`/`SQLSchema`) is only used by insert, update, delete, from, and join.
+1. Before changing a clause, read the `sqlgo` spec set.
+2. Then read the related feature spec at `docs/specs/<date>_{FSD,TSD,DRD}_<slug>.md` and the matching test cases.
+3. Adoption notes or gap notes inside a spec do not replace the target contract.
+4. If a feature spec does not exist, create it with the `writing-specs` skill before writing code.
 
-## Code Conventions
+Do not copy sqlgo detail into this document. Link to `docs/specs/` so the two cannot drift apart.
 
-- Public interfaces and types use the `SQLGo` prefix; private types use the `sqlGo` prefix.
-- Builder methods return the clause/facade interface so they can be chained.
-- Do not insert user values directly into SQL strings. All dynamic values must go through `SetSQLParameter` and then `GetSQLParameterSign`.
-- To add a new clause: create `sqlgo_<clause>.go` (interface, struct, constructor, `BuildSQL`), register the field and `SetSQLGo<Clause>` on `SQLGOModuleSetter`/`sqlGo` in `sqlgo.go`, then call that module in `sqlGo.BuildSQL()` according to SQL order.
-- Follow the existing `fmt.Sprintf` pattern so spacing between clauses stays consistent; tests compare strings exactly.
+## 3. Skills
 
-## Testing
+Skills live in `.agents/skills/<name>/SKILL.md`. Read a skill file before using it. The "Required" column means the skill must not be skipped under the stated condition.
 
-- Tests compare the SQL string exactly (including spaces) against query constants, then check `GetSQLGoParameter()`.
-- Every builder change must run `go test ./...` and update the affected query constants.
-- **Baseline status:** `go test ./...` currently fails on `TestToTsQuery` and `TestToTsQueryPrepend`. Both expect `$2`, while parameter dedup returns `$1` for the same value. Do not assume this failure is caused by your change; only fix the test/expectation if the task actually touches it.
+An agent can use more than one skill at the same time. Load every skill whose condition applies to the task, and combine them when their concerns overlap. For example, use `antislop` together with `antislop-copywriting` while writing a spec, or `test-driven-development` together with `systematic-debugging` while fixing a failing test. Using one skill does not exclude another.
 
-## Documentation
+### 3.1 Core: output and writing quality
 
-- `docs/brief/`, `docs/plans/`, `docs/specs/`, `docs/test-cases/` contain templates. Duplicate a template and name it `YYYY-MM-DD_<TYPE>_<slug>.md`.
-- Plans created with the plan tool are written to `~/.commandcode/plans/`. When a plan is finished, copy it into `docs/plans/` immediately, renamed to the `YYYY-MM-DD_PLAN_<slug>.md` convention:
+| Skill | Required | When to use | What it is for |
+|---|---|---|---|
+| `antislop` | Yes, on every output | Any document, UI text, comment, or user-facing code you write | Core anti-slop filter: rejects technique without purpose, requires a written reason, keeps the result alive |
+| `antislop-copywriting` | Yes, when writing prose | Documents, briefs, specs, plans, UI copy, and product text | Removes AI writing patterns, chooses specific words, preserves the author's voice |
+| `antislop-code` | Yes, when touching comments | Writing or editing code comments | Removes slop comments, keeps comments that carry information, never changes the code |
+| `antislop-ui` | Yes, when building UI | Pages, components, color, layout, and motion | Rejects default AI visuals and enforces hierarchy and visual identity |
+| `antislop-human` | Yes, when the UI has interaction | Forms, navigation, color, states, and interactive controls | Protects contrast, keyboard access, focus, and states so the UI works for everyone |
+| `antislop-layoutmobile` | Yes, when the layout must reflow | Layouts that run from phone to desktop | Enforces breakpoints, grids, overflow, tap targets, and mobile navigation |
 
-  ```sh
-  cp ~/.commandcode/plans/<plan-name>.md docs/plans/YYYY-MM-DD_PLAN_<slug>.md
-  ```
+### 3.2 Meta and process
 
-- `README.md` is still the default GitLab template and does not describe the library; do not use it as a behavior reference.
-- `CLAUDE.md` only contains a reference to this file.
+| Skill | Required | When to use | What it is for |
+|---|---|---|---|
+| `using-superpowers` | Yes, at session start | Starting a new conversation | Decides how to find and invoke the right skill before responding |
+| `brainstorming` | Yes, before creative work | Before building a feature, component, or behavior change | Explores intent, requirements, and design before implementation |
+| `writing-specs` | Yes, when writing specs | Writing or revising specs in `docs/specs/` | Produces FSD, TSD, DRD, DFD, and diagrams with consistent structure and naming |
+| `writing-test-case` | Yes, when creating a TCD | Writing a Test Case Document or agent evaluation scenarios | Defines positive, negative, acceptance coverage, and expected results |
+| `writing-plans` | Yes, for multi-step tasks | After requirements or specs exist, before touching code | Produces an implementation plan that can be executed and reviewed |
+| `executing-plans` | Conditional | Executing a written plan in a separate session with review checkpoints | Runs the plan in stages while keeping review at each checkpoint |
+| `subagent-driven-development` | Yes, for approved plans | Executing a plan with independent tasks in the same session | Default method: controller, one implementer per task, spec review, then code-quality review |
+| `dispatching-parallel-agents` | Conditional | Two or more independent tasks with no shared state | Runs tasks in parallel without waiting on each other |
+| `using-git-worktrees` | Conditional | A feature needs isolation from the workspace, or before executing a plan | Creates an isolated worktree with directory selection and safety checks |
 
-## Skills
+### 3.3 Quality and delivery
 
-Skills live in `.agents/skills/`. Load one with the skill tool before starting work it covers. The tables below list each skill, when to use it, and what it is for.
+| Skill | Required | When to use | What it is for |
+|---|---|---|---|
+| `test-driven-development` | Yes, before implementation code | Working on a feature or bugfix | Writes the test first, watches it fail, then writes the minimal code |
+| `systematic-debugging` | Yes, on any failure | A bug, failing test, or unexpected behavior appears, before proposing a fix | Finds the root cause before changing code |
+| `verification-before-completion` | Yes, before claiming completion | Before saying work is done, committing, or opening a PR | Runs verification and shows output as evidence, not assumptions |
+| `requesting-code-review` | Conditional | Finishing a task, a major feature, or before merging | Checks that the result matches the requirements |
+| `receiving-code-review` | Yes, when receiving review | Receiving review feedback, before applying suggestions | Judges feedback on technical merit instead of agreeing or applying it blindly |
+| `finishing-a-development-branch` | Conditional | Implementation is complete and all tests pass | Chooses the integration step: merge, PR, or cleanup |
+| `karpathy-guidelines` | Yes, when touching code | Writing, reviewing, or refactoring code | Keeps changes small, avoids overcomplication, and states assumptions |
 
-### Specifications and planning
+### 3.4 Domain
 
-| Skill | Use when | Purpose |
-|---|---|---|
-| `brainstorming` | Before any creative work: new features, components, or behavior changes | Explores intent, requirements, and design before implementation. |
-| `writing-specs` | Writing or revising specs in `docs/specs/` (FSD, TSD, DRD, diagrams) | Enforces separate document types, shared date/slug naming, and traceable requirement IDs. Not for briefs, plans, README, or code-only changes. |
-| `writing-plans` | You have a spec or requirements for a multi-step task | Produces a step-by-step implementation plan before touching code. |
-| `executing-plans` | Executing a written plan in a separate session with review checkpoints | Keeps execution aligned with the plan and adds review gates. |
-| `writing-test-case` | Creating or revising TCDs, or defining acceptance and edge-case coverage | Defines verifiable positive, negative, and boundary cases with expected results. |
+| Skill | Required | When to use | What it is for |
+|---|---|---|---|
+| `graphify` | Conditional, always through the wrapper | Architecture or file-relationship questions, or building and updating the knowledge graph | Answers codebase questions from the graph and keeps the graph current |
+| `deploy-server` | Yes, when deploying | Deploying, releasing, rolling back, or restarting a Rakkume app on the systemd production server | Builds the binary, rsyncs, restarts the unit, runs migrations, and verifies health |
+| `writing-skills` | Conditional | Creating, editing, or verifying a skill | Keeps agent skill structure and quality consistent |
 
-### Development workflow
+## 4. Graphify
 
-| Skill | Use when | Purpose |
-|---|---|---|
-| `test-driven-development` | Implementing a feature or bugfix | Write the test first, watch it fail, then implement the minimal fix. |
-| `systematic-debugging` | Any bug, test failure, or unexpected behavior | Investigates root cause before proposing fixes. |
-| `using-git-worktrees` | Feature work that needs isolation from the current workspace | Creates a separate worktree with safety checks. |
-| `dispatching-parallel-agents` | Two or more independent tasks with no shared state or sequential dependency | Runs the tasks concurrently. |
-| `subagent-driven-development` | Executing a plan of independent tasks in the current session | Dispatches a subagent per task with review between tasks. |
-| `karpathy-guidelines` | Writing, reviewing, or refactoring code | Reduces over-engineering and keeps changes surgical and verifiable. |
+The `graphify` skill expects a `scripts/graphify` wrapper at the repo root. This repo does not currently have one. If the wrapper is absent, report it as a missing prerequisite; do not call the bare `graphify` executable, `python -m graphify`, or another project's wrapper, and do not create a wrapper unless requested.
 
-### Review and completion
+If a wrapper is added later, these rules apply:
 
-| Skill | Use when | Purpose |
-|---|---|---|
-| `requesting-code-review` | Completing tasks, shipping a major feature, or preparing to merge | Verifies the work against requirements before merge. |
-| `receiving-code-review` | Acting on review feedback, especially when it is unclear or questionable | Requires verification and technical rigor instead of blind agreement. |
-| `verification-before-completion` | About to claim work is complete, fixed, or passing | Runs verification commands and confirms output before making success claims. |
-| `finishing-a-development-branch` | Implementation is complete and all tests pass | Presents structured options for merge, PR, or cleanup. |
+- Always run `scripts/graphify <subcommand> ...`.
+- Never write the graph to `graphify-out/` or any other directory. The official output is `docs/graphify/`.
+- If `docs/graphify/graph.json` already exists and the question is natural language, query it directly. Do not rebuild the graph.
+- After a large code change, update the graph incrementally.
+- If the wrapper is missing or unusable, report it as a missing prerequisite. Do not create a new wrapper without a request.
 
-### Anti-slop suite
+Examples once the wrapper exists:
 
-| Skill | Use when | Purpose |
-|---|---|---|
-| `antislop` | Always, as the core filter | Stops generic AI slop in code and output. |
-| `antislop-code` | Writing or reviewing code comments | Removes generic AI-slop comments while keeping valuable ones; does not change code. |
-| `antislop-copywriting` | Writing or editing prose such as headlines, tone, and CTAs | Applies anti-AI-writing patterns to copy. |
-| `antislop-ui` | Building or editing any interface | Covers color, layout, components, and motion. |
-| `antislop-human` | UI work involving accessibility | Covers contrast, keyboard, focus, and states; includes a contrast checker. |
-| `antislop-layoutmobile` | Layouts that reflow from phone to desktop | Covers grids, overflow, and tap targets. |
+```bash
+scripts/graphify query "how does parameter deduplication work"
+scripts/graphify path "SQLGoWhere" "SQLGoParameter"
+scripts/graphify explain "SQLGoParameter"
+scripts/graphify update .
+scripts/graphify god-nodes --top 10
+```
 
-### Project knowledge and tooling
+## 5. Workflow
 
-| Skill | Use when | Purpose |
-|---|---|---|
-| `using-superpowers` | Starting a conversation or deciding which skill to use | Explains how to discover and invoke skills. |
-| `graphify` | Questions about the codebase, architecture, file relationships, or the project knowledge graph | Builds, queries, or updates the project knowledge graph. |
-| `writing-skills` | Creating, editing, or verifying a skill | Enforces skill structure and testing before deployment. |
-| `deploy-server` | Deploying, releasing, rolling back, or restarting Rakkume apps on the systemd server | Build, transfer, and restart runbook for Rakkume apps; not applicable to this library. |
+1. Establish scope. Read `docs/specs/` as described in section 2.
+2. Write a brief or plan in `docs/brief/` or `docs/plans/`.
+3. If the plan was drafted in `~/.commandcode/plans/`, copy it to `docs/plans/` immediately after it is written, before implementation.
+4. Include specification updates in the plan when the change touches behavior, contracts, or data.
+5. Commit and push the documents, then wait for the execution go-ahead.
+6. Execute with TDD. For an approved plan, use `subagent-driven-development`.
+7. Run verification: `go build ./...`, `go test ./...`, `go vet ./...`, and `gofmt -l .`. `go.mod` targets `go 1.18`; do not use newer language features without bumping the module.
+8. Review the result, then commit and push.
+9. Update the graph with `scripts/graphify update .` when the change affects large-scale structure, if the wrapper exists.
 
-## Constraints
+Known baseline: `go test ./...` currently fails on `TestToTsQuery` and `TestToTsQueryPrepend`. Both expect `$2` while parameter deduplication returns `$1` for the same value. Do not assume this failure was caused by your change; fix the test expectation only when the task actually touches that behavior.
 
-- Public v2 library: avoid breaking changes to existing signatures. Add new methods/types instead of changing existing ones.
-- The only runtime dependency is `github.com/lib/pq`.
-- Do not change the order in which placeholder parameters are registered without adjusting tests and callers, because the order of `GetSQLParameter()` is part of the usage contract.
+## 6. Prohibitions
+
+- Do not copy `docs/specs/` content into this document or into another document that can drift.
+- Do not add dependencies, abstractions, or configuration beyond the task's needs. The only runtime dependency is `github.com/lib/pq`.
+- Do not change existing public v2 signatures; add new methods or types instead.
+- Do not change the order in which placeholders are registered without adjusting tests and callers, because `GetSQLParameter()` order is part of the usage contract.
+- Do not commit secrets, tokens, or credentials.
+- Do not leave a dev server or background process running after testing.
