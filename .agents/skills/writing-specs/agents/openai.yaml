@@ -1,0 +1,3 @@
+interface:
+  display_name: "Writing Specs"
+  short_description: "Write specification documents only in docs/specs/"
