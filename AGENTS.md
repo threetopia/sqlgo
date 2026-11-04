@@ -68,6 +68,12 @@ gofmt -l .
 ## Documentation
 
 - `docs/brief/`, `docs/plans/`, `docs/specs/`, `docs/test-cases/` contain templates. Duplicate a template and name it `YYYY-MM-DD_<TYPE>_<slug>.md`.
+- Plans created with the plan tool are written to `~/.commandcode/plans/`. When a plan is finished, copy it into `docs/plans/` immediately, renamed to the `YYYY-MM-DD_PLAN_<slug>.md` convention:
+
+  ```sh
+  cp ~/.commandcode/plans/<plan-name>.md docs/plans/YYYY-MM-DD_PLAN_<slug>.md
+  ```
+
 - `README.md` is still the default GitLab template and does not describe the library; do not use it as a behavior reference.
 - `CLAUDE.md` only contains a reference to this file.
 
