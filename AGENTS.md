@@ -62,7 +62,7 @@ An agent can use more than one skill at the same time. Load every skill whose co
 | Skill | Required | When to use | What it is for |
 |---|---|---|---|
 | `antislop` | Yes, on every output | Any document, UI text, comment, or user-facing code you write | Core anti-slop filter: rejects technique without purpose, requires a written reason, keeps the result alive |
-| `antislop-copywriting` | Yes, when writing prose | Documents, briefs, specs, plans, UI copy, and product text | Removes AI writing patterns, chooses specific words, preserves the author's voice |
+| `antislop-copywriting` | Yes, when writing proses | Documents, briefs, specs, plans, UI copy, and product text | Removes AI writing patterns, chooses specific words, preserves the author's voice |
 | `antislop-code` | Yes, when touching comments | Writing or editing code comments | Removes slop comments, keeps comments that carry information, never changes the code |
 | `antislop-ui` | Yes, when building UI | Pages, components, color, layout, and motion | Rejects default AI visuals and enforces hierarchy and visual identity |
 | `antislop-human` | Yes, when the UI has interaction | Forms, navigation, color, states, and interactive controls | Protects contrast, keyboard access, focus, and states so the UI works for everyone |
